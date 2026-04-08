@@ -30,9 +30,10 @@ class AuthController extends Controller
         if ($usuario && $usuario->contrasena === $request->contrasena) {
             
             // 4. Iniciar sesión guardando datos vitales del empleado
-            Session::put('usuario_id', $usuario->id_usuario);
-            Session::put('rol_id', $usuario->id_rol);
-            Session::put('nombre', $usuario->nombre_completo);
+           // Cuando la contraseña es correcta, guardamos las variables de sesión
+                Session::put('usuario_id', $usuario->id_usuario);
+                Session::put('nombre', $usuario->nombre_completo);
+                Session::put('id_rol', $usuario->id_rol);
 
             // 5. Asignar el usuario de MariaDB basado en el rol (RNF-04)
             $db_user = match ($usuario->id_rol) {

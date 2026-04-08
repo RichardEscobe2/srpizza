@@ -30,12 +30,17 @@
     <h3 style="color: #f15a24; margin: 0;">Sr. Pizza</h3>
     <div>
         <span class="me-3">Mesero: {{ Session::get('nombre', 'Usuario') }}</span>
+        <!-- BOTÓN DE ACTUALIZAR AGREGADO AQUÍ -->
+        <a href="{{ route('mesero.mesas') }}" class="btn btn-sm btn-outline-warning me-2">Actualizar Mesas ↻</a>
         <a href="{{ route('logout') }}" class="btn btn-sm btn-danger">Cerrar Sesión</a>
     </div>
 </div>
 
 <div class="container mt-4">
-    <h4 class="mb-4 text-center">Seleccione una Mesa</h4>
+    <div class="d-flex justify-content-center align-items-center mb-4">
+        <h4 class="m-0 text-center">Seleccione una Mesa</h4>
+    </div>
+    
      @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show text-center fw-bold shadow-sm" role="alert">
             {{ session('success') }}
@@ -48,6 +53,7 @@
             {{ $errors->first() }}
         </div>
     @endif
+    
     <div class="row g-4 justify-content-center">
         <!-- Ciclo para imprimir las mesas desde la Base de Datos -->
          @foreach($mesas as $mesa)
@@ -80,6 +86,57 @@
             @endforeach
     </div>
 </div>
+<!-- TOAST DE BOOTSTRAP PARA LA ALERTA VISUAL -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1055;">
+    <div id="alertaCocina" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="10000">
+        <div class="d-flex">
+            <div class="toast-body fs-5 fw-bold" id="textoAlerta">
+                🔔 ¡Orden Lista para la Mesa X!
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
+<!-- LÓGICA DE ALERTAS EN TIEMPO REAL CORREGIDA -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Leemos el sessionStorage para recordar qué órdenes ya sonaron, incluso si la página se recarga
+    let ordenesAlertadas = JSON.parse(sessionStorage.getItem('alertas_mostradas')) || []; 
+
+    const sonidoCampana = new Audio('https://actions.google.com/sounds/v1/alarms/ding_dong.ogg');
+
+    function buscarAlertas() {
+        fetch('{{ route('mesero.alertas') }}')
+            .then(response => response.json())
+            .then(data => {
+                data.forEach(pedido => {
+                    // Si el pedido está "Listo" y no está en nuestra memoria de sessionStorage
+                    if (!ordenesAlertadas.includes(pedido.pedido_id)) {
+                        
+                        // 1. Lo guardamos permanentemente en la sesión de esta pestaña
+                        ordenesAlertadas.push(pedido.pedido_id);
+                        sessionStorage.setItem('alertas_mostradas', JSON.stringify(ordenesAlertadas));
+                        
+                        // 2. Mostrar la alerta visual
+                        document.getElementById('textoAlerta').innerText = '🔔 ¡La orden de la MESA ' + pedido.numero_mesa + ' está Lista para servir!';
+                        const toast = new bootstrap.Toast(document.getElementById('alertaCocina'));
+                        toast.show();
+                        
+                        // 3. Reproducir el sonido
+                        sonidoCampana.play().catch(e => console.log("El navegador bloqueó el autoplay del sonido."));
+                        
+                        // NOTA: Eliminamos el window.location.reload() para no interrumpir tu trabajo en pantalla
+                    }
+                });
+            })
+            .catch(error => console.error('Error buscando alertas:', error));
+    }
+
+    // Ejecutar la búsqueda silenciosa cada 5 segundos
+    setInterval(buscarAlertas, 5000);
+</script>
+
 
 </body>
 </html>

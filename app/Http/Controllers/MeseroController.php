@@ -121,4 +121,19 @@ class MeseroController extends Controller
         DB::table('mesas')->where('mesa_id', $mesa_id)->update(['estado' => 'Disponible']);
         return redirect()->route('mesero.mesas')->with('success', '¡Mesa lista para recibir nuevos clientes!');
     }
+
+    // 6. Consultar alertas en tiempo real para el mesero (Could Have)
+    public function checarAlertas() {
+        $usuario_id = Session::get('usuario_id');
+        
+        // Buscamos pedidos que estén en estado 'Listo' y pertenezcan a este mesero
+        $pedidosListos = DB::table('pedidos')
+            ->join('mesas', 'pedidos.mesa_id', '=', 'mesas.mesa_id')
+            ->where('pedidos.usuario_id', $usuario_id)
+            ->where('pedidos.estado', 'Listo')
+            ->select('pedidos.pedido_id', 'mesas.numero_mesa')
+            ->get();
+
+        return response()->json($pedidosListos);
+    }
 }
