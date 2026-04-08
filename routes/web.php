@@ -6,6 +6,7 @@ use App\Http\Controllers\MeseroController;
 use App\Http\Controllers\CocinaController;
 use App\Http\Controllers\CajaController;
 use App\Http\Middleware\VerificarSesion;
+use App\Http\Controllers\GerenteController;
 
 // ==========================================
 // RUTAS PÚBLICAS (No requieren sesión)
@@ -28,6 +29,15 @@ Route::middleware([VerificarSesion::class.':2'])->group(function () {
     Route::get('/mesero/alertas', [MeseroController::class, 'checarAlertas'])->name('mesero.alertas');
 });
 
+// 📊 RUTAS EXCLUSIVAS DEL GERENTE (Rol 3)
+Route::middleware([VerificarSesion::class.':3'])->group(function () {
+    Route::get('/gerente/dashboard', [GerenteController::class, 'index'])->name('gerente.dashboard');
+    Route::post('/gerente/usuario/{id}/estado', [GerenteController::class, 'alternarEstado'])->name('gerente.usuario_estado');
+    Route::post('/gerente/usuario/{id}/password', [GerenteController::class, 'cambiarPassword'])->name('gerente.usuario_password');
+     Route::post('/gerente/personal/crear', [GerenteController::class, 'crearPersonal'])->name('gerente.crear_personal');
+    Route::post('/gerente/usuario/{id}/comision', [GerenteController::class, 'cambiarComision'])->name('gerente.usuario_comision');
+});
+
 // 👨‍🍳 RUTAS EXCLUSIVAS DE LA COCINA (Rol 4)
 Route::middleware([VerificarSesion::class.':4'])->group(function () {
     Route::get('/cocina/kds', [CocinaController::class, 'index'])->name('cocina.kds');
@@ -41,3 +51,4 @@ Route::middleware([VerificarSesion::class.':5'])->group(function () {
     Route::post('/caja/cancelar/{pedido_id}', [CajaController::class, 'cancelarPedido'])->name('caja.cancelar_pedido');
     Route::get('/caja/ticket/{pedido_id}', [CajaController::class, 'imprimirTicket'])->name('caja.imprimir_ticket');
 });
+
