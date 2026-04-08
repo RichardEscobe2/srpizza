@@ -58,7 +58,7 @@ class AuthController extends Controller
                 2 => redirect('/mesero/mesas'),    // Rol 2: Mesero
                 3 => redirect('/gerente/dashboard'),// Rol 3: Gerente Operativo
                 4 => redirect('/cocina/kds'),      // Rol 4: Cocinero
-                5 => redirect('/caja/pedidos'),    // Rol 5: Cajero
+                5 => redirect('/caja/ordenes'),    // Rol 5: Cajero
                 default => redirect('/login')->withErrors(['error' => 'Rol desconocido']),
             };
         }

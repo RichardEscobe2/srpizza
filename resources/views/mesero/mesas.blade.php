@@ -50,20 +50,34 @@
     @endif
     <div class="row g-4 justify-content-center">
         <!-- Ciclo para imprimir las mesas desde la Base de Datos -->
-        @foreach($mesas as $mesa)
-            <div class="col-6 col-md-3 col-lg-2">
-                <!-- Hacemos que toda la tarjeta sea un enlace hacia la toma de pedidos -->
-                <a href="{{ route('mesero.pedido', $mesa->mesa_id) }}" class="mesa-card 
-                    {{ strtolower($mesa->estado) == 'disponible' ? 'disponible' : '' }}
-                    {{ strtolower($mesa->estado) == 'ocupada' ? 'ocupada' : '' }}
-                    {{ strtolower($mesa->estado) == 'sucia' ? 'sucia' : '' }}">
-                    
-                    <h5 class="mb-1">MESA {{ $mesa->numero_mesa }}</h5>
-                    <span class="badge bg-dark">{{ strtoupper($mesa->estado) }}</span>
-                    <div class="mt-2 small text-muted">Cap: {{ $mesa->capacidad }} pax</div>
-                </a>
-            </div>
-        @endforeach
+         @foreach($mesas as $mesa)
+                <div class="col-6 col-md-4 col-lg-3">
+                    <div class="card shadow-sm border-2 text-center p-3 h-100 
+                        @if($mesa->estado == 'Disponible') border-success 
+                        @elseif($mesa->estado == 'Ocupada') border-danger 
+                        @else border-warning @endif">
+                        
+                        <h4 class="fw-bold mb-1">MESA {{ $mesa->numero_mesa }}</h4>
+                        
+                        @if($mesa->estado == 'Disponible')
+                            <span class="badge bg-success mb-3">DISPONIBLE</span>
+                            <a href="{{ route('mesero.pedido', $mesa->mesa_id) }}" class="btn btn-outline-success w-100 fw-bold">Abrir Mesa</a>
+                            
+                        @elseif($mesa->estado == 'Ocupada')
+                            <span class="badge bg-danger mb-3">OCUPADA</span>
+                            <a href="{{ route('mesero.pedido', $mesa->mesa_id) }}" class="btn btn-danger w-100 fw-bold">Ver Comanda</a>
+                            
+                        @elseif($mesa->estado == 'Sucia')
+                            <span class="badge bg-warning text-dark mb-3">SUCIA</span>
+                            <form action="{{ route('mesero.limpiar_mesa', $mesa->mesa_id) }}" method="POST">
+                                @csrf
+                                <button type="submit" class="btn btn-warning w-100 fw-bold text-dark">✔ Marcar Limpia</button>
+                            </form>
+                        @endif
+                        
+                    </div>
+                </div>
+            @endforeach
     </div>
 </div>
 

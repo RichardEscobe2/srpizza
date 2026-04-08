@@ -78,51 +78,65 @@
             </div>
         </div>
 
-               <!-- COLUMNA DERECHA: RESUMEN DE LA COMANDA -->
+        <!-- COLUMNA DERECHA: RESUMEN DE LA COMANDA -->
         <div class="col-md-4 col-lg-3">
             <div class="card shadow-sm sticky-top" style="top: 15px;">
-                <div class="card-header bg-warning text-dark text-center fw-bold">
-                    RESUMEN DE COMANDA
+                <div class="card-header bg-dark text-white text-center fw-bold">
+                    ESTADO DE LA MESA
                 </div>
-                <div class="card-body p-0" style="max-height: 50vh; overflow-y: auto;">
+                <div class="card-body p-0" style="max-height: 60vh; overflow-y: auto;">
                     
-                    <!-- BLOQUE NUEVO: Muestra lo que ya se pidió antes (Historial de la mesa) -->
-                    @if(isset($detallesPrevios) && count($detallesPrevios) > 0)
-                        <div class="bg-light p-2 border-bottom">
-                            <h6 class="text-primary fw-bold text-center mb-1" style="font-size: 0.85rem;">YA EN COCINA</h6>
-                            <ul class="list-group list-group-flush mb-2">
-                            @foreach($detallesPrevios as $detalle)
-                                <li class="list-group-item d-flex justify-content-between align-items-start px-2 bg-transparent py-1">
-                                    <div class="ms-1 me-auto" style="font-size: 0.8rem;">
-                                        <div class="text-dark">{{ $detalle->nombre }}</div>
-                                        @if($detalle->comentarios)
-                                            <span class="badge bg-secondary mt-1 text-wrap text-start">Nota: {{ $detalle->comentarios }}</span>
-                                        @endif
+                    <!-- SECCIÓN 1: LISTO PARA SERVIR (Aparece cuando el cocinero le da en Listo) -->
+                    @if(isset($detallesListo) && count($detallesListo) > 0)
+                        <div class="bg-success bg-opacity-25 p-2 border-bottom border-success">
+                            <h6 class="text-success fw-bold text-center mb-2" style="font-size: 0.85rem;">✔ LISTO PARA SERVIR</h6>
+                            <ul class="list-group list-group-flush mb-1">
+                            @foreach($detallesListo as $detalle)
+                                <li class="list-group-item d-flex justify-content-between align-items-start px-2 bg-transparent py-1 border-0">
+                                    <div class="ms-1 me-auto" style="font-size: 0.85rem;">
+                                        <div class="text-dark fw-bold">{{ $detalle->nombre }}</div>
                                     </div>
-                                    <span class="text-muted">${{ number_format($detalle->subtotal, 2) }}</span>
                                 </li>
                             @endforeach
                             </ul>
                         </div>
                     @endif
-                    <!-- FIN BLOQUE NUEVO -->
 
-                    <h6 class="text-success fw-bold text-center mt-2 mb-1" style="font-size: 0.85rem;">NUEVOS PRODUCTOS</h6>
-                    <ul class="list-group list-group-flush" id="lista-comanda">
-                        <li class="list-group-item text-center text-muted py-4">Agrega productos...</li>
-                    </ul>
+                    <!-- SECCIÓN 2: YA EN COCINA -->
+                    @if(isset($detallesCocina) && count($detallesCocina) > 0)
+                        <div class="bg-warning bg-opacity-25 p-2 border-bottom border-warning">
+                            <h6 class="text-dark fw-bold text-center mb-2" style="font-size: 0.85rem;">👨‍🍳 YA EN COCINA</h6>
+                            <ul class="list-group list-group-flush mb-1">
+                            @foreach($detallesCocina as $detalle)
+                                <li class="list-group-item d-flex justify-content-between align-items-start px-2 bg-transparent py-1 border-0">
+                                    <div class="ms-1 me-auto" style="font-size: 0.85rem;">
+                                        <div class="text-dark">{{ $detalle->nombre }}</div>
+                                    </div>
+                                </li>
+                            @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
+                    <!-- SECCIÓN 3: NUEVOS PRODUCTOS -->
+                    <div class="p-2 bg-white">
+                        <h6 class="text-primary fw-bold text-center mt-2 mb-2" style="font-size: 0.85rem;">NUEVOS PRODUCTOS</h6>
+                        <ul class="list-group list-group-flush" id="lista-comanda">
+                            <li class="list-group-item text-center text-muted py-4 border-0">Agrega productos...</li>
+                        </ul>
+                    </div>
                 </div>
-                <div class="card-footer bg-white border-top-0">
+                
+                <div class="card-footer bg-light border-top border-2">
                     <div class="d-flex justify-content-between fw-bold fs-5 mb-3 text-danger">
                         <span>TOTAL NUEVO:</span>
                         <span id="total-comanda">$0.00</span>
                     </div>
                     
-                    <!-- Formulario conectado a Laravel -->
                     <form id="form-pedido" action="{{ route('mesero.guardar_pedido', $mesa->mesa_id) }}" method="POST">
                         @csrf
                         <input type="hidden" name="json_pedido" id="json_pedido">
-                        <button type="button" class="btn btn-success w-100 fw-bold py-2" onclick="prepararEnvio()">
+                        <button type="button" class="btn btn-primary w-100 fw-bold py-2" onclick="prepararEnvio()">
                             ENVIAR A COCINA
                         </button>
                     </form>
