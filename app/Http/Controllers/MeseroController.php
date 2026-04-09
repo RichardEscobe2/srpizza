@@ -93,14 +93,18 @@ class MeseroController extends Controller
             }
 
             foreach ($items as $item) {
+                // Obtenemos el precio real directo desde la base de datos para evitar alteraciones en el frontend
+                // Si el producto no existe o el ID es manipulado, se asigna 0 por seguridad para que la app no truene
+                $precio_real = DB::table('menu')->where('producto_id', $item['id'])->value('precio') ?? 0;
+
                 DB::table('detalles_pedido')->insert([
                     'pedido_id' => $pedido_id,
                     'producto_id' => $item['id'],
                     'cantidad' => 1,
-                    'precio_unitario' => $item['precio'],
+                    'precio_unitario' => $precio_real,
                     'comentarios' => $item['nota'] ?? null
                 ]);
-                $total_nuevo += $item['precio'];
+                $total_nuevo += $precio_real;
             }
 
             $total_actual = $pedido ? $pedido->total : 0;
