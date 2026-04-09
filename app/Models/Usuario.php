@@ -6,5 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class Usuario extends Model
 {
-    //
+    protected $table = 'usuarios';
+    protected $primaryKey = 'id_usuario';
+    public $timestamps = false;
+
+    // Relación: Un usuario (mesero) ha tomado muchos pedidos
+    public function pedidos()
+    {
+        return $this->hasMany(Pedido::class, 'usuario_id', 'id_usuario');
+    }
 }

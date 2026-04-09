@@ -10,4 +10,10 @@ class Mesa extends Model
     protected $primaryKey = 'mesa_id';
     // Apagamos los timestamps de Laravel
     public $timestamps = false;
+
+    // Relación: Una mesa puede tener muchos pedidos
+    public function pedidos()
+    {
+        return $this->hasMany(Pedido::class, 'mesa_id', 'mesa_id');
+    }
 }

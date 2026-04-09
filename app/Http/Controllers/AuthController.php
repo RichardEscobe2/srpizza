@@ -28,7 +28,7 @@ class AuthController extends Controller
                           ->first();
 
         // 3. Validar las credenciales
-        if ($usuario && Hash::check($request->contrasena, $usuario->contrasena)) {
+       if ($usuario && Hash::check($request->contrasena, $usuario->contrasena)) {
             
             // 4. Iniciar sesión guardando datos vitales del empleado
            // Cuando la contraseña es correcta, guardamos las variables de sesión
