@@ -5,17 +5,15 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
+use App\Models\Pedido;
+use App\Models\DetallePedido;
 
 class CajaController extends Controller
 {
     // 1. Mostrar las cuentas abiertas y el detalle de la seleccionada (RF-07)
     public function index(Request $request) {
         // Traemos todos los pedidos que no han sido pagados ni cancelados
-        $pedidos = DB::table('pedidos')
-            ->join('mesas', 'pedidos.mesa_id', '=', 'mesas.mesa_id')
-            ->whereNotIn('pedidos.estado', ['Pagado', 'Cancelado'])
-            ->select('pedidos.*', 'mesas.numero_mesa')
-            ->get();
+        $pedidos = Pedido::with('mesa')->whereNotIn('estado', ['Pagado', 'Cancelado'])->get();
 
         $pedidoSeleccionado = null;
         $detalles = [];
@@ -29,13 +27,9 @@ class CajaController extends Controller
 
         // Si el cajero hizo clic en una orden, calculamos sus totales
         if ($request->has('pedido_id')) {
-            $pedidoSeleccionado = DB::table('pedidos')->where('pedido_id', $request->pedido_id)->first();
+              $pedidoSeleccionado = Pedido::with('mesa')->find($request->pedido_id);
             
-            $detalles = DB::table('detalles_pedido')
-                ->join('menu', 'detalles_pedido.producto_id', '=', 'menu.producto_id')
-                ->where('pedido_id', $request->pedido_id)
-                ->select('detalles_pedido.*', 'menu.nombre')
-                ->get();
+           $detalles = DetallePedido::with('producto')->where('pedido_id', $request->pedido_id)->get();
 
             $subtotal = $detalles->sum('subtotal');
             $iva = $subtotal * 0.16;
@@ -50,7 +44,7 @@ class CajaController extends Controller
     public function procesarPago(Request $request, $pedido_id) {
         DB::beginTransaction();
         try {
-            $pedido = DB::table('pedidos')->where('pedido_id', $pedido_id)->first();
+             $pedido = Pedido::find($pedido_id);
 
             if (!$pedido) {
                 return back()->withErrors(['error' => 'No se encontró la orden.']);
@@ -84,7 +78,7 @@ class CajaController extends Controller
     public function cancelarPedido($pedido_id) {
         DB::beginTransaction();
         try {
-            $pedido = DB::table('pedidos')->where('pedido_id', $pedido_id)->first();
+             $pedido = Pedido::find($pedido_id);
 
             if (!$pedido) {
                 return back()->withErrors(['error' => 'No se encontró la orden.']);
@@ -114,23 +108,14 @@ class CajaController extends Controller
 
     // 4. Generar e imprimir Ticket de Venta (Could Have)
     public function imprimirTicket($pedido_id) {
-        $pedido = DB::table('pedidos')
-            ->join('mesas', 'pedidos.mesa_id', '=', 'mesas.mesa_id')
-            ->join('usuarios', 'pedidos.usuario_id', '=', 'usuarios.id_usuario')
-            ->where('pedido_id', $pedido_id)
-            ->select('pedidos.*', 'mesas.numero_mesa', 'usuarios.nombre_completo as cajero')
-            ->first();
+          $pedido = Pedido::with(['mesa', 'usuario'])->where('pedido_id', $pedido_id)->first();
 
         if (!$pedido) {
             return back()->withErrors(['error' => 'Orden no encontrada.']);
         }
 
-        $detalles = DB::table('detalles_pedido')
-            ->join('menu', 'detalles_pedido.producto_id', '=', 'menu.producto_id')
-            ->where('pedido_id', $pedido_id)
-            ->select('detalles_pedido.*', 'menu.nombre')
-            ->get();
-
+         $detalles = DetallePedido::with('producto')->where('pedido_id', $pedido_id)->get();
+         
         // Extraemos la configuración general de la pizzería desde MariaDB
         $config = DB::table('configuracion_sistema')->first();
 

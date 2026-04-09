@@ -36,10 +36,11 @@
 
    <div>
         <p style="margin: 2px 0;"><strong>Orden #:</strong> {{ $pedido->pedido_id }}</p>
-        <p style="margin: 2px 0;"><strong>Mesa:</strong> {{ $pedido->mesa->numero_mesa ?? 'N/A' }}</p>
+             <p style="margin: 2px 0;"><strong>Mesa:</strong> {{ $pedido->mesa->numero_mesa ?? 'N/A' }}</p>
         <p style="margin: 2px 0;"><strong>Fecha:</strong> {{ \Carbon\Carbon::parse($pedido->fecha_hora)->format('d/m/Y H:i') }}</p>
         <p style="margin: 2px 0;"><strong>Cajero:</strong> {{ $pedido->usuario->nombre_completo ?? 'N/A' }}</p>
     </div>
+
 
 
     <div class="divider"></div>
@@ -57,7 +58,7 @@
             @foreach($detalles as $item)
                 @php $subtotal_calculado += $item->subtotal; @endphp
                 <tr class="item-row">
-                    <td class="text-left">{{ $item->cantidad }}x</td>
+                     <td class="text-left">{{ $item->producto->nombre ?? 'Desconocido' }}</td>
                     <td class="text-left">{{ $item->producto->nombre ?? 'Desconocido' }}</td>
                     <td class="text-right">${{ number_format($item->subtotal, 2) }}</td>
                 </tr>

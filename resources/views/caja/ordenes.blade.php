@@ -51,7 +51,7 @@
                         <tbody>
                             @forelse($pedidos as $ped)
                                 <tr>
-                                  <td class="fw-bold text-warning">Mesa {{ $ped->mesa->numero_mesa ?? 'N/A' }}</td>  
+                                    <td class="fw-bold text-warning">Mesa {{ $ped->mesa->numero_mesa ?? 'N/A' }}</td>
                                     <td>{{ $ped->estado }}</td>
                                     <td>${{ number_format($ped->total, 2) }}</td>
                                     <td>
@@ -73,7 +73,7 @@
                 <h5 class="border-bottom border-secondary pb-2 mb-3">Detalle de Cuenta</h5>
                 
                 @if($pedidoSeleccionado)
-                  <h6 class="text-warning mb-3">MESA {{ $pedidoSeleccionado->mesa->numero_mesa ?? 'N/A' }} | Orden #{{ $pedidoSeleccionado->pedido_id }}</h6>_id)->value('numero_mesa') }} | Orden #{{ $pedidoSeleccionado->pedido_id }}</h6>
+                    <h6 class="text-warning mb-3">MESA {{ $pedidoSeleccionado->mesa->numero_mesa ?? 'N/A' }} | Orden #{{ $pedidoSeleccionado->pedido_id }}</h6>
                     
                     <div style="height: 300px; overflow-y: auto;" class="mb-3 bg-dark p-2 rounded">
                         <table class="table table-dark table-sm mb-0">

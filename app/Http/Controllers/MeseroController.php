@@ -101,10 +101,10 @@ class MeseroController extends Controller
                     'pedido_id' => $pedido_id,
                     'producto_id' => $item['id'],
                     'cantidad' => 1,
-                     'precio_unitario' => $precio_real,
+                       'precio_unitario' => $precio_real,
                     'comentarios' => $item['nota'] ?? null
                 ]);
-                 $total_nuevo += $precio_real;
+                  $total_nuevo += $precio_real;
             }
 
             $total_actual = $pedido ? $pedido->total : 0;
