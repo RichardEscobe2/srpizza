@@ -39,7 +39,7 @@ class GerenteController extends Controller
        // NUEVO: D) DATOS PARA SECCIÓN PERSONAL (Filtrado solo a roles operativos: 2, 4 y 5)
         $usuarios = DB::table('usuarios')
             ->join('roles', 'usuarios.id_rol', '=', 'roles.rol_id')
-            ->whereIn('usuarios.id_rol', [3-5]) // CORREGIDO: Buscamos Meseros, Cocineros y Cajeros
+           ->whereIn('usuarios.id_rol', [2, 4, 5]) 
             ->select('usuarios.id_usuario', 'usuarios.nombre_completo', 'usuarios.matricula', 'roles.nombre_rol', 'usuarios.activo', 'usuarios.porcentaje_comision')
             ->get();
 
