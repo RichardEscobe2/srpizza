@@ -27,9 +27,9 @@ class CajaController extends Controller
 
         // Si el cajero hizo clic en una orden, calculamos sus totales
         if ($request->has('pedido_id')) {
-            $pedidoSeleccionado = Pedido::with('mesa')->find($request->pedido_id);
+              $pedidoSeleccionado = Pedido::with('mesa')->find($request->pedido_id);
             
-            $detalles = DetallePedido::with('producto')->where('pedido_id', $request->pedido_id)->get();
+           $detalles = DetallePedido::with('producto')->where('pedido_id', $request->pedido_id)->get();
 
             $subtotal = $detalles->sum('subtotal');
             $iva = $subtotal * 0.16;
@@ -44,7 +44,7 @@ class CajaController extends Controller
     public function procesarPago(Request $request, $pedido_id) {
         DB::beginTransaction();
         try {
-            $pedido = Pedido::find($pedido_id);
+             $pedido = Pedido::find($pedido_id);
 
             if (!$pedido) {
                 return back()->withErrors(['error' => 'No se encontró la orden.']);
@@ -78,7 +78,7 @@ class CajaController extends Controller
     public function cancelarPedido($pedido_id) {
         DB::beginTransaction();
         try {
-            $pedido = Pedido::find($pedido_id);
+             $pedido = Pedido::find($pedido_id);
 
             if (!$pedido) {
                 return back()->withErrors(['error' => 'No se encontró la orden.']);
@@ -108,13 +108,13 @@ class CajaController extends Controller
 
     // 4. Generar e imprimir Ticket de Venta (Could Have)
     public function imprimirTicket($pedido_id) {
-        $pedido = Pedido::with(['mesa', 'usuario'])->where('pedido_id', $pedido_id)->first();
+          $pedido = Pedido::with(['mesa', 'usuario'])->where('pedido_id', $pedido_id)->first();
 
         if (!$pedido) {
             return back()->withErrors(['error' => 'Orden no encontrada.']);
         }
 
-        $detalles = DetallePedido::with('producto')->where('pedido_id', $pedido_id)->get();
+         $detalles = DetallePedido::with('producto')->where('pedido_id', $pedido_id)->get();
 
         // Extraemos la configuración general de la pizzería desde MariaDB
         $config = DB::table('configuracion_sistema')->first();

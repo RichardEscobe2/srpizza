@@ -28,7 +28,7 @@ class AuthController extends Controller
                           ->first();
 
         // 3. Validar las credenciales
-        $es_valida = false;
+      $es_valida = false;
         if ($usuario) {
             // Verificar si la contraseña NO es un hash de bcrypt (no empieza con $2y$)
             if (!str_starts_with($usuario->contrasena, '$2y$')) {
@@ -47,7 +47,6 @@ class AuthController extends Controller
         }
 
        if ($usuario && $es_valida) {
-            
             // 4. Iniciar sesión guardando datos vitales del empleado
            // Cuando la contraseña es correcta, guardamos las variables de sesión
                 Session::put('usuario_id', $usuario->id_usuario);

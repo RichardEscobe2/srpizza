@@ -94,7 +94,7 @@
                             @foreach($detallesListo as $detalle)
                                 <li class="list-group-item d-flex justify-content-between align-items-start px-2 bg-transparent py-1 border-0">
                                     <div class="ms-1 me-auto" style="font-size: 0.85rem;">
-                                        <div class="text-dark fw-bold">{{ $detalle->nombre }}</div>
+                                        <div class="text-dark fw-bold">{{ $detalle->producto->nombre ?? 'Desconocido' }}</div>
                                     </div>
                                 </li>
                             @endforeach
@@ -110,7 +110,7 @@
                             @foreach($detallesCocina as $detalle)
                                 <li class="list-group-item d-flex justify-content-between align-items-start px-2 bg-transparent py-1 border-0">
                                     <div class="ms-1 me-auto" style="font-size: 0.85rem;">
-                                        <div class="text-dark">{{ $detalle->nombre }}</div>
+                                        <div class="text-dark">{{ $detalle->producto->nombre ?? 'Desconocido' }}</div>
                                     </div>
                                 </li>
                             @endforeach

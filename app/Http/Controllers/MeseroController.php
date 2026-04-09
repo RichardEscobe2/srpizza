@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Models\Mesa;
 use App\Models\Categoria;
 use App\Models\Menu;
+use App\Models\Pedido;
+use App\Models\DetallePedido;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 
@@ -32,8 +34,7 @@ class MeseroController extends Controller
         "));
 
         // Obtenemos TODOS los pedidos activos de esta mesa
-        $pedidosActivos = DB::table('pedidos')
-            ->where('mesa_id', $mesa_id)
+        $pedidosActivos = Pedido::where('mesa_id', $mesa_id)
             ->whereNotIn('estado', ['Pagado', 'Cancelado'])
             ->get();
 
@@ -41,16 +42,13 @@ class MeseroController extends Controller
         $detallesListo = collect();
 
         if ($pedidosActivos->isNotEmpty()) {
-            $todosDetalles = DB::table('detalles_pedido')
-                ->join('menu', 'detalles_pedido.producto_id', '=', 'menu.producto_id')
-                ->join('pedidos', 'detalles_pedido.pedido_id', '=', 'pedidos.pedido_id')
-                ->whereIn('detalles_pedido.pedido_id', $pedidosActivos->pluck('pedido_id'))
-                ->select('detalles_pedido.*', 'menu.nombre', 'pedidos.estado')
+            $todosDetalles = DetallePedido::with(['producto', 'pedido'])
+                ->whereIn('pedido_id', $pedidosActivos->pluck('pedido_id'))
                 ->get();
 
             // Aquí está la magia: separamos los platillos según el estado del pedido
-            $detallesCocina = $todosDetalles->where('estado', 'Pendiente');
-            $detallesListo = $todosDetalles->where('estado', 'Listo');
+            $detallesCocina = $todosDetalles->filter(fn($det) => $det->pedido && $det->pedido->estado === 'Pendiente');
+            $detallesListo = $todosDetalles->filter(fn($det) => $det->pedido && $det->pedido->estado === 'Listo');
         }
 
         return view('mesero.pedido', compact('mesa', 'categorias', 'productos', 'detallesCocina', 'detallesListo'));
@@ -69,10 +67,7 @@ class MeseroController extends Controller
         DB::beginTransaction();
         try {
             // Buscamos si existe un pedido estrictamente 'Pendiente' (En cocina)
-            $pedido = DB::table('pedidos')
-                ->where('mesa_id', $mesa_id)
-                ->where('estado', 'Pendiente')
-                ->first();
+            $pedido = Pedido::where('mesa_id', $mesa_id)->where('estado', 'Pendiente')->first();
 
             $pedido_id = null;
             $total_nuevo = 0;
@@ -80,14 +75,16 @@ class MeseroController extends Controller
             // Si no hay pedido pendiente (porque los anteriores ya están "Listos"), CREAMOS uno nuevo
             // para que no se revuelvan en la pantalla del cocinero.
             if (!$pedido) {
-                $pedido_id = DB::table('pedidos')->insertGetId([
-                    'usuario_id' => $usuario_id,
-                    'mesa_id' => $mesa_id,
-                    'estado' => 'Pendiente',
-                    'total' => 0,
-                    'fecha_hora' => now()
-                ]);
-                DB::table('mesas')->where('mesa_id', $mesa_id)->update(['estado' => 'Ocupada']);
+                $nuevoPedido = new Pedido();
+                $nuevoPedido->usuario_id = $usuario_id;
+                $nuevoPedido->mesa_id = $mesa_id;
+                $nuevoPedido->estado = 'Pendiente';
+                $nuevoPedido->total = 0;
+                $nuevoPedido->fecha_hora = now();
+                $nuevoPedido->save();
+                $pedido_id = $nuevoPedido->pedido_id;
+
+                Mesa::where('mesa_id', $mesa_id)->update(['estado' => 'Ocupada']);
             } else {
                 $pedido_id = $pedido->pedido_id;
             }
@@ -95,20 +92,21 @@ class MeseroController extends Controller
             foreach ($items as $item) {
                   // Obtenemos el precio real directo desde la base de datos para evitar alteraciones en el frontend
                 // Si el producto no existe o el ID es manipulado, se asigna 0 por seguridad para que la app no truene
-                $precio_real = DB::table('menu')->where('producto_id', $item['id'])->value('precio') ?? 0;
+                $precio_real = Menu::where('producto_id', $item['id'])->value('precio') ?? 0;
 
-                DB::table('detalles_pedido')->insert([
-                    'pedido_id' => $pedido_id,
-                    'producto_id' => $item['id'],
-                    'cantidad' => 1,
-                     'precio_unitario' => $precio_real,
-                    'comentarios' => $item['nota'] ?? null
-                ]);
-                 $total_nuevo += $precio_real;
+                $detalle = new DetallePedido();
+                $detalle->pedido_id = $pedido_id;
+                $detalle->producto_id = $item['id'];
+                $detalle->cantidad = 1;
+                $detalle->precio_unitario = $precio_real;
+                $detalle->comentarios = $item['nota'] ?? null;
+                $detalle->save();
+
+                $total_nuevo += $precio_real;
             }
 
             $total_actual = $pedido ? $pedido->total : 0;
-            DB::table('pedidos')->where('pedido_id', $pedido_id)->update([
+            Pedido::where('pedido_id', $pedido_id)->update([
                 'total' => $total_actual + $total_nuevo
             ]);
 
@@ -122,7 +120,7 @@ class MeseroController extends Controller
     }
     // 5. Marcar la mesa como limpia y disponible (RN-05)
     public function limpiarMesa($mesa_id) {
-        DB::table('mesas')->where('mesa_id', $mesa_id)->update(['estado' => 'Disponible']);
+        Mesa::where('mesa_id', $mesa_id)->update(['estado' => 'Disponible']);
         return redirect()->route('mesero.mesas')->with('success', '¡Mesa lista para recibir nuevos clientes!');
     }
 
@@ -131,12 +129,16 @@ class MeseroController extends Controller
         $usuario_id = Session::get('usuario_id');
         
         // Buscamos pedidos que estén en estado 'Listo' y pertenezcan a este mesero
-        $pedidosListos = DB::table('pedidos')
-            ->join('mesas', 'pedidos.mesa_id', '=', 'mesas.mesa_id')
-            ->where('pedidos.usuario_id', $usuario_id)
-            ->where('pedidos.estado', 'Listo')
-            ->select('pedidos.pedido_id', 'mesas.numero_mesa')
-            ->get();
+        $pedidosListos = Pedido::with('mesa')
+            ->where('usuario_id', $usuario_id)
+            ->where('estado', 'Listo')
+            ->get()
+            ->map(function($pedido) {
+                return [
+                    'pedido_id' => $pedido->pedido_id,
+                    'numero_mesa' => $pedido->mesa->numero_mesa ?? 'N/A'
+                ];
+            });
 
         return response()->json($pedidosListos);
     }
