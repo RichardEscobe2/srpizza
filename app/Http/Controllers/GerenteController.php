@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Hash;
 
 class GerenteController extends Controller
 {
@@ -66,9 +67,8 @@ class GerenteController extends Controller
         $request->validate(['nueva_password' => 'required|min:3']);
         
         DB::table('usuarios')->where('id_usuario', $id)->update([
-            'contrasena' => $request->nueva_password
+           'contrasena' => Hash::make($request->nueva_password)
         ]);
-
         return back()->with('success', 'Contraseña actualizada correctamente.');
     }
 
@@ -118,7 +118,7 @@ class GerenteController extends Controller
                 'empleado_id' => $empleadoId,
                 'nombre_completo' => $request->nombre_completo,
                 'matricula' => $request->matricula,
-                'contrasena' => $request->contrasena,
+                       'contrasena' => Hash::make($request->contrasena),
                 'id_rol' => $request->id_rol,
                 'activo' => 1,
                 'limite_descuento' => 0, // Por defecto 0, el Admin lo cambia después si es necesario

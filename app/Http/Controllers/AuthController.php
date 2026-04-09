@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Usuario;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
@@ -27,31 +28,13 @@ class AuthController extends Controller
                           ->first();
 
         // 3. Validar las credenciales
-        if ($usuario && $usuario->contrasena === $request->contrasena) {
+       if ($usuario && Hash::check($request->contrasena, $usuario->contrasena)) {
             
             // 4. Iniciar sesión guardando datos vitales del empleado
            // Cuando la contraseña es correcta, guardamos las variables de sesión
                 Session::put('usuario_id', $usuario->id_usuario);
                 Session::put('nombre', $usuario->nombre_completo);
                 Session::put('id_rol', $usuario->id_rol);
-
-            // 5. Asignar el usuario de MariaDB basado en el rol (RNF-04)
-            $db_user = match ($usuario->id_rol) {
-                1 => 'admin_restaurante', 
-                3 => 'gerente_restaurante', 
-                default => 'empleado_restaurante' 
-            };
-
-            // 6. Asignar la contraseña del servidor MariaDB
-            $db_pass = match ($usuario->id_rol) {
-                1 => '123',     // Contraseña de admin_restaurante
-                3 => '456',     // Contraseña de gerente_restaurante
-                default => '789'// Contraseña de empleado_restaurante
-            };
-
-            // 7. Guardamos las credenciales del servidor en la sesión para el Middleware
-            Session::put('db_user', $db_user);
-            Session::put('db_pass', $db_pass);
 
             // 8. Redirección basada en el id_rol (Corregido según tu BD)
             return match ($usuario->id_rol) {
