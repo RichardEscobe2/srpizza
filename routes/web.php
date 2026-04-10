@@ -74,14 +74,3 @@ Route::middleware([VerificarSesion::class.':4'])->group(function () {
 
 
 
-
-
-
-//RUTAS EXCLUSIVAS DEL CAJERO Rol 5
-Route::middleware([VerificarSesion::class.':5'])->group(function () {
-    Route::get('/caja/ordenes', [CajaController::class, 'index'])->name('caja.ordenes');
-    Route::post('/caja/pagar/{pedido_id}', [CajaController::class, 'procesarPago'])->name('caja.procesar_pago');
-    Route::post('/caja/cancelar/{pedido_id}', [CajaController::class, 'cancelarPedido'])->name('caja.cancelar_pedido');
-    Route::get('/caja/ticket/{pedido_id}', [CajaController::class, 'imprimirTicket'])->name('caja.imprimir_ticket');
-});
-
