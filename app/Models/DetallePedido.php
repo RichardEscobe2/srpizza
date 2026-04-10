@@ -17,7 +17,7 @@ class DetallePedido extends Model
     }
 
     // Relación: Un detalle hace referencia a un producto del menú
-    public function producto()
+    public function Producto()
     {
         return $this->belongsTo(Menu::class, 'producto_id', 'producto_id');
     }

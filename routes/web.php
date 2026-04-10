@@ -46,17 +46,20 @@ Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::middleware([VerificarSesion::class.':2'])->group(function () {
     Route::get('/mesero/mesas', [MeseroController::class, 'index'])->name('mesero.mesas');
     Route::get('/mesero/pedido/{mesa_id}', [MeseroController::class, 'tomaPedido'])->name('mesero.pedido');
+    Route::post('/mesero/pedido/{mesa_id}', [MeseroController::class, 'guardarPedido'])->name('mesero.guardar_pedido');
+    Route::post('/mesero/mesas/{mesa_id}/limpiar', [MeseroController::class, 'limpiarMesa'])->name('mesero.limpiar_mesa');
     Route::get('/mesero/alertas', [MeseroController::class, 'checarAlertas'])->name('mesero.alertas');
 });
 
 //RUTAS EXCLUSIVAS DEL GERENTE (Rol 3)
 
 
-
-// RUTAS EXCLUSIVAS DEL GERENTE Rol 3
-Route::middleware([VerificarSesion::class.':3'])->group(function () {
+// 📊 RUTAS EXCLUSIVAS DEL GERENTE (Rol 3)
+    Route::middleware([VerificarSesion::class.':3'])->group(function () {
     Route::get('/gerente/dashboard', [GerenteController::class, 'index'])->name('gerente.dashboard');
     Route::post('/gerente/usuario/{id}/estado', [GerenteController::class, 'alternarEstado'])->name('gerente.usuario_estado');
+    Route::post('/gerente/usuario/{id}/password', [GerenteController::class, 'cambiarPassword'])->name('gerente.usuario_password');
+     Route::post('/gerente/personal/crear', [GerenteController::class, 'crearPersonal'])->name('gerente.crear_personal');
     Route::post('/gerente/usuario/{id}/comision', [GerenteController::class, 'cambiarComision'])->name('gerente.usuario_comision');
 });
 
@@ -78,7 +81,9 @@ Route::middleware([VerificarSesion::class.':4'])->group(function () {
 
 
 
-//RUTAS EXCLUSIVAS DEL CAJERO Rol 5
 Route::middleware([VerificarSesion::class.':5'])->group(function () {
     Route::get('/caja/ordenes', [CajaController::class, 'index'])->name('caja.ordenes');
-    Route::post('/caja/pagar/{pedido_id}', [CajaController::class, 'procesarPago'])->name('caja.procesar_pago');});
+    Route::post('/caja/pagar/{pedido_id}', [CajaController::class, 'procesarPago'])->name('caja.procesar_pago');
+    Route::post('/caja/cancelar/{pedido_id}', [CajaController::class, 'cancelarPedido'])->name('caja.cancelar_pedido');
+    Route::get('/caja/ticket/{pedido_id}', [CajaController::class, 'imprimirTicket'])->name('caja.imprimir_ticket');
+});
