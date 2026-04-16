@@ -11,10 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('compras', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
-        });
+       Schema::create('rol', function (Blueprint $table) {
+    $table->integer('rol_id')->primary();
+    $table->string('nombre_rol', 255)->nullable();
+    $table->text('descripcion')->nullable();
+});
     }
 
     /**
@@ -22,6 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('compras');
+        Schema::dropIfExists('rol');
     }
 };

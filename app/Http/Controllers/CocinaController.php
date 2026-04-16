@@ -9,22 +9,23 @@ class CocinaController extends Controller
 {
     // 1. Mostrar la Pantalla KDS
     public function index() {
-        // Obtenemos solo los pedidos que están "Pendientes", ordenados por el más antiguo primero (RF-11)
-        $pedidos = DB::table('pedidos')
-            ->join('mesas', 'pedidos.mesa_id', '=', 'mesas.mesa_id')
-            ->join('usuarios', 'pedidos.usuario_id', '=', 'usuarios.id_usuario')
-            ->where('pedidos.estado', 'Pendiente')
-            ->orderBy('pedidos.fecha_hora', 'asc')
-            ->select('pedidos.*', 'mesas.numero_mesa', 'usuarios.nombre_completo as mesero')
+        // CORRECCIÓN: 'pedidos' -> 'pedido', 'mesas' -> 'mesa', 'usuarios' -> 'usuario'
+        $pedidos = DB::table('pedido')
+            ->join('mesa', 'pedido.mesa_id', '=', 'mesa.mesa_id')
+            ->join('usuario', 'pedido.usuario_id', '=', 'usuario.id_usuario')
+            ->where('pedido.estado', 'Pendiente')
+            ->orderBy('pedido.fecha_hora', 'asc')
+            ->select('pedido.*', 'mesa.numero_mesa', 'usuario.nombre_completo as mesero')
             ->get();
 
         // Obtenemos los platillos y notas de esos pedidos específicos
         $detalles = [];
         if ($pedidos->count() > 0) {
-            $detalles = DB::table('detalles_pedido')
-                ->join('menu', 'detalles_pedido.producto_id', '=', 'menu.producto_id')
+            // CORRECCIÓN: 'detalles_pedido' -> 'detalle', 'menu' -> 'producto'
+            $detalles = DB::table('detalle')
+                ->join('producto', 'detalle.producto_id', '=', 'producto.producto_id')
                 ->whereIn('pedido_id', $pedidos->pluck('pedido_id'))
-                ->select('detalles_pedido.*', 'menu.nombre')
+                ->select('detalle.*', 'producto.nombre')
                 ->get();
         }
 
@@ -33,8 +34,8 @@ class CocinaController extends Controller
 
     // 2. Botón para marcar la orden como "Listo"
     public function marcarListo($pedido_id) {
-        // Actualizamos el estado del pedido, lo cual lo sacará de la pantalla de la cocina
-        DB::table('pedidos')
+        // CORRECCIÓN: 'pedidos' -> 'pedido'
+        DB::table('pedido')
             ->where('pedido_id', $pedido_id)
             ->update(['estado' => 'Listo']);
 

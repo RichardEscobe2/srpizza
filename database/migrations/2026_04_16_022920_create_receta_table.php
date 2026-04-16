@@ -11,10 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('proveedores', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
-        });
+       Schema::create('receta', function (Blueprint $table) {
+    $table->integer('receta_id')->primary();
+    $table->integer('producto_id')->nullable();
+    $table->integer('insumo_id')->nullable();
+    $table->decimal('cantidad_requerida', 10, 3)->nullable();
+});
     }
 
     /**
@@ -22,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('proveedores');
+        Schema::dropIfExists('receta');
     }
 };

@@ -5,7 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Mesa;
 use App\Models\Categoria;
-use App\Models\Menu;
+// IMPORTANTE: Asegúrate de tener el modelo Producto creado (en lugar de Menu)
+use App\Models\Producto; 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 
@@ -20,19 +21,19 @@ class MeseroController extends Controller
         $mesa = Mesa::findOrFail($mesa_id);
         $categorias = Categoria::all();
 
-        // Traemos menú con la validación de stock
+        // Corrección: Cambiamos 'menu' por 'producto', 'recetas' por 'receta' y 'insumos' por 'insumo'
         $productos = collect(DB::select("
             SELECT m.producto_id, m.categoria_id, m.nombre, m.precio, m.tamano, m.es_preparado, m.activo, m.es_recomendado,
                    IFNULL(FLOOR(MIN(i.stock_actual / r.cantidad_requerida)), 999) as stock_disponible
-            FROM menu m
-            LEFT JOIN recetas r ON m.producto_id = r.producto_id
-            LEFT JOIN insumos i ON r.insumo_id = i.insumo_id
+            FROM producto m
+            LEFT JOIN receta r ON m.producto_id = r.producto_id
+            LEFT JOIN insumo i ON r.insumo_id = i.insumo_id
             WHERE m.activo = 1
             GROUP BY m.producto_id, m.categoria_id, m.nombre, m.precio, m.tamano, m.es_preparado, m.activo, m.es_recomendado
         "));
 
-        // Obtenemos TODOS los pedidos activos de esta mesa
-        $pedidosActivos = DB::table('pedidos')
+        // Corrección: Cambiamos 'pedidos' por 'pedido'
+        $pedidosActivos = DB::table('pedido')
             ->where('mesa_id', $mesa_id)
             ->whereNotIn('estado', ['Pagado', 'Cancelado'])
             ->get();
@@ -41,11 +42,12 @@ class MeseroController extends Controller
         $detallesListo = collect();
 
         if ($pedidosActivos->isNotEmpty()) {
-            $todosDetalles = DB::table('detalles_pedido')
-                ->join('menu', 'detalles_pedido.producto_id', '=', 'menu.producto_id')
-                ->join('pedidos', 'detalles_pedido.pedido_id', '=', 'pedidos.pedido_id')
-                ->whereIn('detalles_pedido.pedido_id', $pedidosActivos->pluck('pedido_id'))
-                ->select('detalles_pedido.*', 'menu.nombre', 'pedidos.estado')
+            // Corrección: Cambiamos 'detalles_pedido' por 'detalle', 'menu' por 'producto', y 'pedidos' por 'pedido'
+            $todosDetalles = DB::table('detalle')
+                ->join('producto', 'detalle.producto_id', '=', 'producto.producto_id')
+                ->join('pedido', 'detalle.pedido_id', '=', 'pedido.pedido_id')
+                ->whereIn('detalle.pedido_id', $pedidosActivos->pluck('pedido_id'))
+                ->select('detalle.*', 'producto.nombre', 'pedido.estado')
                 ->get();
 
             // Aquí está la magia: separamos los platillos según el estado del pedido
@@ -68,8 +70,8 @@ class MeseroController extends Controller
 
         DB::beginTransaction();
         try {
-            // Buscamos si existe un pedido estrictamente 'Pendiente' (En cocina)
-            $pedido = DB::table('pedidos')
+            // Corrección: 'pedidos' a 'pedido'
+            $pedido = DB::table('pedido')
                 ->where('mesa_id', $mesa_id)
                 ->where('estado', 'Pendiente')
                 ->first();
@@ -77,38 +79,39 @@ class MeseroController extends Controller
             $pedido_id = null;
             $total_nuevo = 0;
 
-            // Si no hay pedido pendiente (porque los anteriores ya están "Listos"), CREAMOS uno nuevo
-            // para que no se revuelvan en la pantalla del cocinero.
             if (!$pedido) {
-                $pedido_id = DB::table('pedidos')->insertGetId([
+                // Corrección: 'pedidos' a 'pedido'
+                $pedido_id = DB::table('pedido')->insertGetId([
                     'usuario_id' => $usuario_id,
                     'mesa_id' => $mesa_id,
                     'estado' => 'Pendiente',
                     'total' => 0,
                     'fecha_hora' => now()
                 ]);
-                DB::table('mesas')->where('mesa_id', $mesa_id)->update(['estado' => 'Ocupada']);
+                // Corrección: 'mesas' a 'mesa'
+                DB::table('mesa')->where('mesa_id', $mesa_id)->update(['estado' => 'Ocupada']);
             } else {
                 $pedido_id = $pedido->pedido_id;
             }
 
             foreach ($items as $item) {
-                  // Obtenemos el precio real directo desde la base de datos para evitar alteraciones en el frontend
-                // Si el producto no existe o el ID es manipulado, se asigna 0 por seguridad para que la app no truene
-                $precio_real = DB::table('menu')->where('producto_id', $item['id'])->value('precio') ?? 0;
+                // Corrección: 'menu' a 'producto'
+                $precio_real = DB::table('producto')->where('producto_id', $item['id'])->value('precio') ?? 0;
                 
-                DB::table('detalles_pedido')->insert([
+                // Corrección: 'detalles_pedido' a 'detalle'
+                DB::table('detalle')->insert([
                     'pedido_id' => $pedido_id,
                     'producto_id' => $item['id'],
                     'cantidad' => 1,
-                       'precio_unitario' => $precio_real,
+                    'precio_unitario' => $precio_real,
                     'comentarios' => $item['nota'] ?? null
                 ]);
-                  $total_nuevo += $precio_real;
+                $total_nuevo += $precio_real;
             }
 
             $total_actual = $pedido ? $pedido->total : 0;
-            DB::table('pedidos')->where('pedido_id', $pedido_id)->update([
+            // Corrección: 'pedidos' a 'pedido'
+            DB::table('pedido')->where('pedido_id', $pedido_id)->update([
                 'total' => $total_actual + $total_nuevo
             ]);
 
@@ -120,22 +123,22 @@ class MeseroController extends Controller
             return back()->withErrors(['error' => 'Error al guardar la orden. Verifica el inventario.']);
         }
     }
-    // 5. Marcar la mesa como limpia y disponible (RN-05)
+
     public function limpiarMesa($mesa_id) {
-        DB::table('mesas')->where('mesa_id', $mesa_id)->update(['estado' => 'Disponible']);
+        // Corrección: 'mesas' a 'mesa'
+        DB::table('mesa')->where('mesa_id', $mesa_id)->update(['estado' => 'Disponible']);
         return redirect()->route('mesero.mesas')->with('success', '¡Mesa lista para recibir nuevos clientes!');
     }
 
-    // 6. Consultar alertas en tiempo real para el mesero (Could Have)
     public function checarAlertas() {
         $usuario_id = Session::get('usuario_id');
         
-        // Buscamos pedidos que estén en estado 'Listo' y pertenezcan a este mesero
-        $pedidosListos = DB::table('pedidos')
-            ->join('mesas', 'pedidos.mesa_id', '=', 'mesas.mesa_id')
-            ->where('pedidos.usuario_id', $usuario_id)
-            ->where('pedidos.estado', 'Listo')
-            ->select('pedidos.pedido_id', 'mesas.numero_mesa')
+        // Corrección: 'pedidos' a 'pedido' y 'mesas' a 'mesa'
+        $pedidosListos = DB::table('pedido')
+            ->join('mesa', 'pedido.mesa_id', '=', 'mesa.mesa_id')
+            ->where('pedido.usuario_id', $usuario_id)
+            ->where('pedido.estado', 'Listo')
+            ->select('pedido.pedido_id', 'mesa.numero_mesa')
             ->get();
 
         return response()->json($pedidosListos);

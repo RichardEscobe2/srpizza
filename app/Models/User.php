@@ -7,7 +7,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 class User extends Authenticatable
 {
     // 1. Indica el nombre correcto de la tabla 
-    protected $table = 'usuarios';
+    protected $table = 'usuario';
 
     // 2. Indica la llave primaria correcta 
     protected $primaryKey = 'id_usuario';

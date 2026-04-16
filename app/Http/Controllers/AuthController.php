@@ -22,49 +22,48 @@ class AuthController extends Controller
             'contrasena' => 'required'
         ]);
 
-        // 2. Buscar al usuario en MariaDB usando el Modelo
+        // 2. Buscar al usuario usando el Modelo Usuario (Tabla 'usuario')
+        // Buscamos por 'matricula' y que esté 'activo'
         $usuario = Usuario::where('matricula', $request->matricula)
                           ->where('activo', 1)
                           ->first();
 
         // 3. Validar las credenciales
-      $es_valida = false;
+        $es_valida = false;
         if ($usuario) {
-            // Verificar si la contraseña NO es un hash de bcrypt (no empieza con $2y$)
+            // Caso A: La contraseña está en texto plano (como el '111' de tu seeder)
             if (!str_starts_with($usuario->contrasena, '$2y$')) {
-                // Fallback a texto plano
                 if ($usuario->contrasena === $request->contrasena) {
                     $es_valida = true;
-                    // Actualización transparente: guardar la contraseña como hash seguro
-                    Usuario::where('id_usuario', $usuario->id_usuario)->update([
-                        'contrasena' => Hash::make($request->contrasena)
-                    ]);
                 }
-            } else {
-                // Validar usando Hash::check normalmente
-                $es_valida = Hash::check($request->contrasena, $usuario->contrasena);
+            } 
+            // Caso B: La contraseña ya es un hash seguro de Laravel
+            else {
+                if (Hash::check($request->contrasena, $usuario->contrasena)) {
+                    $es_valida = true;
+                }
             }
         }
 
        if ($usuario && $es_valida) {
-            // 4. Iniciar sesión guardando datos vitales del empleado
-           // Cuando la contraseña es correcta, guardamos las variables de sesión
-                Session::put('usuario_id', $usuario->id_usuario);
-                Session::put('nombre', $usuario->nombre_completo);
-                Session::put('id_rol', $usuario->id_rol);
+            // 4. Iniciar sesión guardando datos del usuario
+            Session::put('usuario_id', $usuario->id_usuario);
+            // CORRECCIÓN: El campo en tu BD es 'nombre_completo'
+            Session::put('nombre', $usuario->nombre_completo); 
+            Session::put('id_rol', $usuario->id_rol);
 
-            // 8. Redirección basada en el id_rol (Corregido según tu BD)
-            return match ($usuario->id_rol) {
-                1 => redirect('/admin/dashboard'), // Rol 1: SuperAdministrador
-                2 => redirect('/mesero/mesas'),    // Rol 2: Mesero
-                3 => redirect('/gerente/dashboard'),// Rol 3: Gerente Operativo
-                4 => redirect('/cocina/kds'),      // Rol 4: Cocinero
-                5 => redirect('/caja/ordenes'),    // Rol 5: Cajero
-                default => redirect('/login')->withErrors(['error' => 'Rol desconocido']),
+            // 5. Redirección basada en el id_rol de tus migraciones
+            return match ((int)$usuario->id_rol) {
+                1 => redirect('/admin/dashboard'), // Administrador
+                2 => redirect('/mesero/mesas'),    // Mesero
+                3 => redirect('/gerente/dashboard'),// Gerente
+                4 => redirect('/cocina/kds'),      // Cocinero
+                5 => redirect('/caja/ordenes'),    // Cajero
+                default => redirect('/login')->withErrors(['error' => 'Rol no configurado']),
             };
         }
 
-        // Si la validación falla
+        // Si los datos no coinciden
         return back()->withErrors(['error' => 'Matrícula o contraseña incorrectas.']);
     }
 

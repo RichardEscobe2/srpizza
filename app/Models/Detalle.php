@@ -4,9 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class DetallePedido extends Model
+class Detalle extends Model
 {
-    protected $table = 'detalles_pedido';
+    protected $table = 'detalle';
     protected $primaryKey = 'detalle_id'; // Assuming 'detalle_id' is the primary key based on naming conventions. If not, this might need adjustment.
     public $timestamps = false;
 

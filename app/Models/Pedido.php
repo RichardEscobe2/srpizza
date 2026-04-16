@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Pedido extends Model
 {
-  protected $table = 'pedidos';
+  protected $table = 'pedido';
     protected $primaryKey = 'pedido_id';
     public $timestamps = false;
 
@@ -25,6 +25,6 @@ class Pedido extends Model
     // Relación: Un pedido tiene muchos detalles (platillos)
     public function detalles()
     {
-        return $this->hasMany(DetallePedido::class, 'pedido_id', 'pedido_id');
+        return $this->hasMany(Detalle::class, 'pedido_id', 'pedido_id');
     }
 }

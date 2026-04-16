@@ -11,10 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('configuracion', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
-        });
+        Schema::create('rol_permiso', function (Blueprint $table) {
+    $table->integer('rol_id');
+    $table->integer('permiso_id');
+    
+    // Llave primaria compuesta por ambas columnas
+    $table->primary(['rol_id', 'permiso_id']);
+});
     }
 
     /**
@@ -22,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('configuracion');
+        Schema::dropIfExists('rol_permiso');
     }
 };

@@ -6,7 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 use App\Models\Pedido;
-use App\Models\DetallePedido;
+// NOTA: Asegúrate de que tu modelo se llame Detalle (en singular) para que coincida con la tabla 'detalle'
+use App\Models\Detalle; 
 
 class CajaController extends Controller
 {
@@ -21,17 +22,22 @@ class CajaController extends Controller
         $iva = 0;
         $totalAPagar = 0;
         
-        // NUEVO: Obtenemos el límite de descuento del usuario activo desde MariaDB
+        // CORRECCIÓN: 'usuarios' -> 'usuario'
         $usuario_id = Session::get('usuario_id');
-        $limiteDescuento = DB::table('usuarios')->where('id_usuario', $usuario_id)->value('limite_descuento') ?? 0;
+        $limiteDescuento = DB::table('usuario')->where('id_usuario', $usuario_id)->value('limite_descuento') ?? 0;
 
         // Si el cajero hizo clic en una orden, calculamos sus totales
         if ($request->has('pedido_id')) {
-              $pedidoSeleccionado = Pedido::with('mesa')->find($request->pedido_id);
+            $pedidoSeleccionado = Pedido::with('mesa')->find($request->pedido_id);
             
-           $detalles = DetallePedido::with('producto')->where('pedido_id', $request->pedido_id)->get();
+            // CORRECCIÓN: Usamos el modelo Detalle (que debe apuntar a la tabla 'detalle')
+            $detalles = Detalle::with('producto')->where('pedido_id', $request->pedido_id)->get();
 
-            $subtotal = $detalles->sum('subtotal');
+            // Calculamos el subtotal (asegúrate de que en el modelo Detalle o en la BD exista el cálculo o columna)
+            $subtotal = $detalles->sum(function($d) {
+                return $d->cantidad * $d->precio_unitario;
+            });
+            
             $iva = $subtotal * 0.16;
             $totalAPagar = $subtotal + $iva;
         }
@@ -50,19 +56,18 @@ class CajaController extends Controller
                 return back()->withErrors(['error' => 'No se encontró la orden.']);
             }
 
-            // 1. Actualizamos la orden a "Pagado" y le guardamos el total final con IVA
-            DB::table('pedidos')->where('pedido_id', $pedido_id)->update([
+            // 1. CORRECCIÓN: 'pedidos' -> 'pedido'
+            DB::table('pedido')->where('pedido_id', $pedido_id)->update([
                 'estado' => 'Pagado',
                 'total' => $request->input('total_final')
             ]);
 
-            // 2. Transición de estado: Pasamos la mesa a "Sucia" para que el mesero la limpie
-            DB::table('mesas')->where('mesa_id', $pedido->mesa_id)->update([
+            // 2. CORRECCIÓN: 'mesas' -> 'mesa'
+            DB::table('mesa')->where('mesa_id', $pedido->mesa_id)->update([
                 'estado' => 'Sucia'
             ]);
             DB::commit();
 
-            // Retornamos el éxito y enviamos el 'ticket_id' en la sesión para que se auto-imprima
             return redirect()->route('caja.ordenes')
                 ->with('success', '¡Cuenta cobrada exitosamente! La Mesa ' . $pedido->mesa_id . ' ahora está pendiente de limpieza.')
                 ->with('ticket_id', $pedido_id);
@@ -84,20 +89,19 @@ class CajaController extends Controller
                 return back()->withErrors(['error' => 'No se encontró la orden.']);
             }
 
-            // 1. Borrado lógico: Pasamos el pedido a estado 'Cancelado'
-            DB::table('pedidos')->where('pedido_id', $pedido_id)->update([
+            // 1. CORRECCIÓN: 'pedidos' -> 'pedido'
+            DB::table('pedido')->where('pedido_id', $pedido_id)->update([
                 'estado' => 'Cancelado'
             ]);
 
-            // 2. Liberamos la mesa pasándola directamente a 'Disponible'
-            DB::table('mesas')->where('mesa_id', $pedido->mesa_id)->update([
+            // 2. CORRECCIÓN: 'mesas' -> 'mesa'
+            DB::table('mesa')->where('mesa_id', $pedido->mesa_id)->update([
                 'estado' => 'Disponible'
             ]);
 
             DB::commit();
 
-            // El Trigger en MariaDB automáticamente auditará este movimiento en la bitácora
-            return redirect()->route('caja.ordenes')->with('success', '¡Orden #' . $pedido_id . ' cancelada exitosamente! El evento ha sido registrado en la auditoría.');
+            return redirect()->route('caja.ordenes')->with('success', '¡Orden #' . $pedido_id . ' cancelada exitosamente!');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -108,16 +112,17 @@ class CajaController extends Controller
 
     // 4. Generar e imprimir Ticket de Venta (Could Have)
     public function imprimirTicket($pedido_id) {
-          $pedido = Pedido::with(['mesa', 'usuario'])->where('pedido_id', $pedido_id)->first();
+        $pedido = Pedido::with(['mesa', 'usuario'])->where('pedido_id', $pedido_id)->first();
 
         if (!$pedido) {
             return back()->withErrors(['error' => 'Orden no encontrada.']);
         }
 
-         $detalles = DetallePedido::with('producto')->where('pedido_id', $pedido_id)->get();
+        // CORRECCIÓN: Usamos el modelo Detalle
+        $detalles = Detalle::with('producto')->where('pedido_id', $pedido_id)->get();
          
-        // Extraemos la configuración general de la pizzería desde MariaDB
-        $config = DB::table('configuracion_sistema')->first();
+        // CORRECCIÓN: 'configuracion_sistema' -> 'config'
+        $config = DB::table('config')->first();
 
         return view('caja.ticket', compact('pedido', 'detalles', 'config'));
     }
