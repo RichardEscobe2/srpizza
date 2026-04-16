@@ -29,38 +29,40 @@
 
     <div class="text-center">
         <h2 style="margin: 5px 0;">{{ $config->nombre_empresa ?? 'SR. PIZZA' }}</h2>
-        <p style="margin: 0; font-size: 12px;">{{ $config->direccion ?? 'Ticket de Consumo Interno' }}</p>
+        <p style="margin: 0; font-size: 12px;">{{ $config->direccion ?? 'Ticket de Consumo' }}</p>
     </div>
 
     <div class="divider"></div>
 
-   <div>
+    <div>
         <p style="margin: 2px 0;"><strong>Orden #:</strong> {{ $pedido->pedido_id }}</p>
-             <p style="margin: 2px 0;"><strong>Mesa:</strong> {{ $pedido->mesa->numero_mesa ?? 'N/A' }}</p>
+        <p style="margin: 2px 0;"><strong>Mesa:</strong> {{ $pedido->mesa->numero_mesa ?? 'N/A' }}</p>
         <p style="margin: 2px 0;"><strong>Fecha:</strong> {{ \Carbon\Carbon::parse($pedido->fecha_hora)->format('d/m/Y H:i') }}</p>
         <p style="margin: 2px 0;"><strong>Cajero:</strong> {{ $pedido->usuario->nombre_completo ?? 'N/A' }}</p>
     </div>
-
-
 
     <div class="divider"></div>
 
     <table>
         <thead>
             <tr class="divider" style="border-bottom: 1px dashed #000;">
-                <th class="text-left">Cant</th>
-                <th class="text-left">Producto</th>
-                <th class="text-right">Total</th>
+                <th class="text-left" style="width: 15%;">Cant</th>
+                <th class="text-left" style="width: 55%;">Producto</th>
+                <th class="text-right" style="width: 30%;">Total</th>
             </tr>
         </thead>
         <tbody>
             @php $subtotal_calculado = 0; @endphp
             @foreach($detalles as $item)
-                @php $subtotal_calculado += $item->subtotal; @endphp
+                @php 
+                    /* Calculamos el importe real multiplicando cantidad x precio_unitario */
+                    $importe_item = $item->cantidad * $item->precio_unitario;
+                    $subtotal_calculado += $importe_item; 
+                @endphp
                 <tr class="item-row">
-                     <td class="text-left">{{ $item->producto->nombre ?? 'Desconocido' }}</td>
+                    <td class="text-left">{{ (int)$item->cantidad }}</td>
                     <td class="text-left">{{ $item->producto->nombre ?? 'Desconocido' }}</td>
-                    <td class="text-right">${{ number_format($item->subtotal, 2) }}</td>
+                    <td class="text-right">${{ number_format($importe_item, 2) }}</td>
                 </tr>
             @endforeach
         </tbody>
@@ -70,16 +72,25 @@
 
     <table>
         <tr>
-            <td class="text-left bold">Subtotal:</td>
+            <td class="text-left bold">Subtotal Neto:</td>
             <td class="text-right">${{ number_format($subtotal_calculado, 2) }}</td>
         </tr>
         <tr>
             <td class="text-left bold">IVA (16%):</td>
             <td class="text-right">${{ number_format($subtotal_calculado * 0.16, 2) }}</td>
         </tr>
+        
+        @php $total_matematico = $subtotal_calculado * 1.16; @endphp
+        @if(abs($total_matematico - $pedido->total) > 0.01)
         <tr>
-            <td class="text-left bold" style="font-size: 18px;">TOTAL:</td>
-            <td class="text-right bold" style="font-size: 18px;">${{ number_format($subtotal_calculado * 1.16, 2) }}</td>
+            <td class="text-left bold">Descuento aplicado:</td>
+            <td class="text-right">-${{ number_format($total_matematico - $pedido->total, 2) }}</td>
+        </tr>
+        @endif
+
+        <tr>
+            <td class="text-left bold" style="font-size: 18px; padding-top: 10px;">TOTAL:</td>
+            <td class="text-right bold" style="font-size: 18px; padding-top: 10px;">${{ number_format($pedido->total, 2) }}</td>
         </tr>
     </table>
 
@@ -90,11 +101,9 @@
         <p style="margin: 5px 0 0 0; font-size: 10px;">Este comprobante no tiene efectos fiscales.</p>
     </div>
 
-    <!-- Script para abrir el cuadro de diálogo de impresión automáticamente -->
     <script>
         window.onload = function() {
             window.print();
-            // Cierra la pestaña automáticamente cuando se cancela o termina de imprimir
             window.onafterprint = function() {
                 window.close();
             };

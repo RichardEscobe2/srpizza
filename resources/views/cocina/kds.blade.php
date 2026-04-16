@@ -5,71 +5,87 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KDS - Cocina Sr. Pizza</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('css/estilos.css') }}">
+    {{-- Auto-refresh cada 20 segundos para ver nuevos pedidos sin recargar manualmente --}}
+    <meta http-equiv="refresh" content="20">
     <style>
-        body { background-color: #1e1e1e; color: white; }
-        .header { background-color: #000; padding: 15px; border-bottom: 3px solid #f15a24; }
-        .ticket-card { background-color: #fdfdfd; color: black; border-radius: 8px; border-top: 8px solid #ffc107; }
-        .nota-especial { color: #dc3545; font-weight: bold; font-size: 0.85rem; }
+        body { display: block; overflow: hidden; height: 100vh; }
     </style>
 </head>
 <body>
 
-<div class="header d-flex justify-content-between align-items-center mb-4 shadow">
-    <h3 style="color: #f15a24; margin: 0;">Sr. Pizza - KDS Cocina</h3>
-    <div>
-        <span class="me-3">Cocinero: {{ Session::get('nombre', 'Usuario') }}</span>
-        <!-- Botón para recargar la pantalla y ver nuevas órdenes -->
-        <a href="{{ route('cocina.kds') }}" class="btn btn-sm btn-outline-warning me-2">Actualizar ↻</a>
-        <a href="{{ route('logout') }}" class="btn btn-sm btn-danger">Cerrar Sesión</a>
+<nav class="liquid-navbar">
+    <h3 class="m-0 fw-bold text-accent">Sr. Pizza</h3>
+    <div class="d-flex align-items-center gap-3">
+        <span class="text-liquid-muted d-none d-md-block">
+            Chef: <span class="fw-bold text-white">{{ Session::get('nombre', 'Usuario') }}</span>
+        </span>
+        {{-- CORRECCIÓN: apuntaba a mesero.mesas, ahora apunta a cocina.kds --}}
+        <a href="{{ route('cocina.kds') }}" class="btn btn-sm btn-outline-accent">Actualizar ↻</a>
+        <a href="{{ route('logout') }}" class="btn btn-sm btn-danger-unified px-3">Cerrar Sesión</a>
     </div>
-</div>
+</nav>
 
-<div class="container-fluid px-4">
+<div class="container-fluid mt-4">
     @if(session('success'))
-        <div class="alert alert-success text-center fw-bold">{{ session('success') }}</div>
+        <div class="alert alert-success text-center fw-bold liquid-card mx-auto mb-4 py-2"
+             style="max-width: 500px; border-color: #2ecc71; color: #2ecc71; background: rgba(46, 204, 113, 0.1);">
+            {{ session('success') }}
+        </div>
     @endif
 
-    <div class="row g-3 flex-nowrap overflow-auto" style="padding-bottom: 20px;">
+    <div class="kds-container">
         @forelse($pedidos as $pedido)
-            <!-- TARJETA DE CADA ORDEN (Estilo Kanban) -->
-            <div class="col-12 col-md-4 col-lg-3">
-                <div class="card ticket-card h-100 shadow">
-                    <div class="card-header bg-transparent border-bottom-0 pt-3 pb-0 d-flex justify-content-between">
-                        <h4 class="mb-0 fw-bold">MESA {{ $pedido->numero_mesa }}</h4>
-                        <span class="text-muted small">Ord #{{ $pedido->pedido_id }}</span>
+            <div class="kds-liquid-card">
+                <div class="kds-card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="m-0 fw-bold text-white">MESA {{ $pedido->numero_mesa }}</h4>
+                        <small class="text-liquid-muted">Orden #{{ $pedido->pedido_id }}</small>
                     </div>
-                    <div class="card-body pt-1">
-                        <p class="small text-muted mb-3 border-bottom pb-2">Mesero: {{ $pedido->mesero }}<br>Hora: {{ \Carbon\Carbon::parse($pedido->fecha_hora)->format('H:i') }}</p>
-                        
-                        <ul class="list-unstyled mb-4">
-                            <!-- Filtramos solo los detalles de este pedido -->
-                            @foreach($detalles->where('pedido_id', $pedido->pedido_id) as $item)
-                                <li class="mb-2 border-bottom border-light pb-1">
-                                    <div class="fw-bold fs-6">
-                                        <span class="badge bg-dark me-1">{{ $item->cantidad }}x</span> {{ $item->nombre }}
+                    <div class="text-end">
+                        <div class="text-accent fw-bold fs-5">{{ \Carbon\Carbon::parse($pedido->fecha_hora)->format('H:i') }}</div>
+                        <small class="text-liquid-muted">{{ $pedido->mesero }}</small>
+                    </div>
+                </div>
+
+                <div class="kds-card-body">
+                    <ul class="list-unstyled m-0">
+                        @foreach($detalles->where('pedido_id', $pedido->pedido_id) as $item)
+                            <li class="kds-item">
+                                <div class="d-flex align-items-center">
+                                    <span class="kds-quantity">{{ $item->cantidad }}x</span>
+                                    <span class="text-white fw-bold fs-5">{{ $item->nombre }}</span>
+                                </div>
+                                @if($item->comentarios)
+                                    <div class="kds-note">
+                                        ⚠ {{ strtoupper($item->comentarios) }}
                                     </div>
-                                    @if($item->comentarios)
-                                        <div class="nota-especial mt-1 ps-4">>>> {{ strtoupper($item->comentarios) }}</div>
-                                    @endif
-                                </li>
-                            @endforeach
-                        </ul>
-                    </div>
-                    <div class="card-footer bg-transparent border-top-0 pb-3">
-                        <form action="{{ route('cocina.marcar_listo', $pedido->pedido_id) }}" method="POST">
-                            @csrf
-                            <button type="submit" class="btn btn-dark w-100 fw-bold fs-5 py-2">TERMINAR ORDEN</button>
-                        </form>
-                    </div>
+                                @endif
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+
+                <div class="p-3 border-top border-secondary">
+                    <form action="{{ route('cocina.marcar_listo', $pedido->pedido_id) }}" method="POST" class="m-0">
+                        @csrf
+                        <button type="submit" class="btn btn-sr-pizza w-100 fw-bold fs-5">
+                            ✔ TERMINAR ORDEN
+                        </button>
+                    </form>
                 </div>
             </div>
         @empty
-            <div class="col-12 text-center mt-5">
-                <h4 class="text-muted">No hay pedidos pendientes. ¡Buen trabajo!</h4>
+            <div class="w-100 text-center mt-5">
+                <div class="liquid-card d-inline-block p-5">
+                    <h4 class="text-liquid-muted">No hay pedidos pendientes por ahora.</h4>
+                    <p class="text-accent small">¡Excelente trabajo!</p>
+                </div>
             </div>
         @endforelse
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

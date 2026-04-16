@@ -18,45 +18,52 @@ class MeseroController extends Controller
     }
 
     public function tomaPedido($mesa_id) {
-        $mesa = Mesa::findOrFail($mesa_id);
-        $categorias = Categoria::all();
+    $mesa = Mesa::findOrFail($mesa_id);
+    $categorias = Categoria::all();
 
-        // Corrección: Cambiamos 'menu' por 'producto', 'recetas' por 'receta' y 'insumos' por 'insumo'
-        $productos = collect(DB::select("
-            SELECT m.producto_id, m.categoria_id, m.nombre, m.precio, m.tamano, m.es_preparado, m.activo, m.es_recomendado,
-                   IFNULL(FLOOR(MIN(i.stock_actual / r.cantidad_requerida)), 999) as stock_disponible
-            FROM producto m
-            LEFT JOIN receta r ON m.producto_id = r.producto_id
-            LEFT JOIN insumo i ON r.insumo_id = i.insumo_id
-            WHERE m.activo = 1
-            GROUP BY m.producto_id, m.categoria_id, m.nombre, m.precio, m.tamano, m.es_preparado, m.activo, m.es_recomendado
-        "));
+    $productos = collect(DB::select("
+        SELECT m.producto_id, m.categoria_id, m.nombre, m.precio, m.tamano, m.es_preparado, m.activo, m.es_recomendado,
+               IFNULL(FLOOR(MIN(i.stock_actual / r.cantidad_requerida)), 999) as stock_disponible
+        FROM producto m
+        LEFT JOIN receta r ON m.producto_id = r.producto_id
+        LEFT JOIN insumo i ON r.insumo_id = i.insumo_id
+        WHERE m.activo = 1
+        GROUP BY m.producto_id, m.categoria_id, m.nombre, m.precio, m.tamano, m.es_preparado, m.activo, m.es_recomendado
+    "));
 
-        // Corrección: Cambiamos 'pedidos' por 'pedido'
-        $pedidosActivos = DB::table('pedido')
-            ->where('mesa_id', $mesa_id)
-            ->whereNotIn('estado', ['Pagado', 'Cancelado'])
-            ->get();
+    $pedidosActivos = DB::table('pedido')
+        ->where('mesa_id', $mesa_id)
+        ->whereNotIn('estado', ['Pagado', 'Cancelado'])
+        ->get();
 
-        $detallesCocina = collect();
-        $detallesListo = collect();
+    $detallesCocina = collect();
+    $detallesListo  = collect();
 
-        if ($pedidosActivos->isNotEmpty()) {
-            // Corrección: Cambiamos 'detalles_pedido' por 'detalle', 'menu' por 'producto', y 'pedidos' por 'pedido'
-            $todosDetalles = DB::table('detalle')
+    if ($pedidosActivos->isNotEmpty()) {
+        // Pedidos en estado Pendiente (en cocina)
+        $idsPendientes = $pedidosActivos->where('estado', 'Pendiente')->pluck('pedido_id');
+        // Pedidos en estado Listo
+        $idsListos = $pedidosActivos->where('estado', 'Listo')->pluck('pedido_id');
+
+        if ($idsPendientes->isNotEmpty()) {
+            $detallesCocina = DB::table('detalle')
                 ->join('producto', 'detalle.producto_id', '=', 'producto.producto_id')
-                ->join('pedido', 'detalle.pedido_id', '=', 'pedido.pedido_id')
-                ->whereIn('detalle.pedido_id', $pedidosActivos->pluck('pedido_id'))
-                ->select('detalle.*', 'producto.nombre', 'pedido.estado')
+                ->whereIn('detalle.pedido_id', $idsPendientes)
+                ->select('detalle.*', 'producto.nombre')
                 ->get();
-
-            // Aquí está la magia: separamos los platillos según el estado del pedido
-            $detallesCocina = $todosDetalles->where('estado', 'Pendiente');
-            $detallesListo = $todosDetalles->where('estado', 'Listo');
         }
 
-        return view('mesero.pedido', compact('mesa', 'categorias', 'productos', 'detallesCocina', 'detallesListo'));
+        if ($idsListos->isNotEmpty()) {
+            $detallesListo = DB::table('detalle')
+                ->join('producto', 'detalle.producto_id', '=', 'producto.producto_id')
+                ->whereIn('detalle.pedido_id', $idsListos)
+                ->select('detalle.*', 'producto.nombre')
+                ->get();
+        }
     }
+
+    return view('mesero.pedido', compact('mesa', 'categorias', 'productos', 'detallesCocina', 'detallesListo'));
+}
 
     public function guardarPedido(Request $request, $mesa_id) {
         $json = $request->input('json_pedido');
@@ -116,7 +123,7 @@ class MeseroController extends Controller
             ]);
 
             DB::commit(); 
-            return redirect()->route('mesero.mesas')->with('success', '¡Comanda enviada satisfactoriamente a cocina!');
+            return redirect()->route('mesero.pedido', $mesa_id)->with('success', '¡Comanda enviada a cocina!');
 
         } catch (\Exception $e) {
             DB::rollBack(); 

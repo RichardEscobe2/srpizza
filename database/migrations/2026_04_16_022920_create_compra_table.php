@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
        Schema::create('compra', function (Blueprint $table) {
-    $table->integer('compra_id')->primary();
+    $table->increments('compra_id');
     $table->integer('proveedor_id')->nullable();
     $table->integer('usuario_id')->nullable();
     $table->dateTime('fecha_compra')->nullable();

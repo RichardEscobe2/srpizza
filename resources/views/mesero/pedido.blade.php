@@ -3,71 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Toma de Pedido - Mesa {{ $mesa->numero_mesa }}</title>
-    <!-- Bootstrap 5 -->
+    <title>Sr. Pizza - Pedido Mesa {{ $mesa->numero_mesa }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('css/estilos.css') }}">
+    <style>
+        body { display: block; overflow-x: hidden; }
+        .comanda-lateral {
+            background: var(--bg-darker);
+            border-left: 1px solid var(--glass-border);
+            height: calc(100vh - 70px);
+            position: sticky;
+            top: 70px;
+            display: flex;
+            flex-direction: column;
+        }
+        .cursor-pointer { cursor: pointer; }
+    </style>
 </head>
-<body class="bg-light">
-
-<nav class="navbar navbar-dark bg-dark mb-4 shadow-sm">
-    <div class="container-fluid">
-        <span class="navbar-brand mb-0 h1 fw-bold text-warning">MESA {{ $mesa->numero_mesa }}</span>
-        <div class="d-flex align-items-center text-white">
-            <span class="me-3 small">Mesero: {{ Session::get('nombre') }}</span>
-            <a href="{{ route('mesero.mesas') }}" class="btn btn-sm btn-outline-light">Volver a Mesas</a>
-        </div>
+<body>
+<nav class="liquid-navbar">
+    <h3 class="m-0 fw-bold text-accent">Sr. Pizza</h3>
+    <div class="d-flex align-items-center gap-3">
+        <span class="text-liquid-muted d-none d-md-block">
+            Mesero: <span class="fw-bold text-white">{{ Session::get('nombre', 'Usuario') }}</span>
+        </span>
+        <a href="{{ route('mesero.mesas') }}" class="btn btn-sm btn-outline-accent">Mapa de Mesas</a>
+        <a href="{{ route('logout') }}" class="btn btn-sm btn-danger-unified px-3">Cerrar Sesión</a>
     </div>
 </nav>
 
-<div class="container-fluid">
-    <div class="row">
-        <!-- COLUMNA IZQUIERDA: MENÚ POR CATEGORÍAS (RF-05) -->
-        <div class="col-md-8 col-lg-9 mb-4">
-            <h5 class="text-muted mb-3">Selecciona los productos</h5>
+<div class="container-fluid p-0">
+    <div class="row g-0">
+        <div class="col-md-8 col-lg-9 p-4">
             
-            <!-- Pestañas de las categorías -->
-            <ul class="nav nav-pills mb-3 border-bottom pb-2" id="pills-tab" role="tablist">
+            @if($errors->any())
+                <div class="alert alert-danger border-0 mb-4 liquid-card py-2" style="background: rgba(231, 76, 60, 0.2); color: #ff6b6b;">
+                    {{ $errors->first() }}
+                </div>
+            @endif
+
+            <ul class="nav nav-pills mb-4" id="pills-tab">
                 @foreach($categorias as $index => $cat)
-                    <li class="nav-item" role="presentation">
+                    <li class="nav-item">
                         <button class="nav-link fw-bold {{ $index == 0 ? 'active' : '' }}" 
-                                id="tab-cat-{{ $cat->categoria_id }}" 
                                 data-bs-toggle="pill" 
                                 data-bs-target="#pane-cat-{{ $cat->categoria_id }}" 
-                                type="button" role="tab">
-                            {{ $cat->nombre }}
+                                type="button">
+                            {{ strtoupper($cat->nombre) }}
                         </button>
                     </li>
                 @endforeach
             </ul>
 
-            <!-- Contenido de las pestañas -->
-            <div class="tab-content" id="pills-tabContent">
+            <div class="tab-content">
                 @foreach($categorias as $index => $cat)
-                    <div class="tab-pane fade {{ $index == 0 ? 'show active' : '' }}" 
-                         id="pane-cat-{{ $cat->categoria_id }}" role="tabpanel">
-                        
-                        <div class="row g-2">
-                            <!-- Bucle para mostrar las pizzas y productos de esta categoría -->
-                            @foreach($productos->where('categoria_id', $cat->categoria_id) as $prod)
+                    <div class="tab-pane fade {{ $index == 0 ? 'show active' : '' }}" id="pane-cat-{{ $cat->categoria_id }}">
+                        <div class="row g-3">
+                            @php
+                                /* AGRUPAMOS LOS PRODUCTOS POR NOMBRE DIRECTAMENTE EN BLADE */
+                                $productosAgrupados = $productos->where('categoria_id', $cat->categoria_id)->groupBy('nombre');
+                            @endphp
+
+                            @foreach($productosAgrupados as $nombreProducto => $variaciones)
                                 <div class="col-6 col-md-4 col-lg-3">
-                                    <div class="card h-100 shadow-sm border-0">
-                                        <div class="card-body text-center p-2 d-flex flex-column">
-                                            <h6 class="card-title text-truncate mb-1" title="{{ $prod->nombre }}">{{ $prod->nombre }}</h6>
-                                            <small class="text-muted mb-2">{{ $prod->tamano }}</small>
-                                            <div class="mt-auto">
-                                                <p class="fw-bold text-success mb-2">${{ number_format($prod->precio, 2) }}</p>
-                                                  <!-- Lógica de Bloqueo por Desabasto (RN-03) -->
-                                                @if($prod->stock_disponible >= 1)
-                                                    <button class="btn btn-sm btn-dark w-100" 
-                                                            onclick="agregarPlatillo({{ $prod->producto_id }}, '{{ $prod->nombre }}', {{ $prod->precio }})">
-                                                        + Agregar
-                                                    </button>
-                                                @else
-                                                    <button class="btn btn-sm btn-secondary w-100 disabled" disabled>
-                                                        AGOTADO
-                                                    </button>
-                                                @endif
-                                            </div>
+                                    <div class="product-liquid-card p-3 h-100 text-center d-flex flex-column justify-content-between cursor-pointer"
+                                         data-nombre="{{ $nombreProducto }}" 
+                                         data-variaciones="{{ $variaciones->toJson() }}"
+                                         onclick="abrirModalTamanos(this)">
+                                        <div>
+                                            <h6 class="text-white mb-1">{{ $nombreProducto }}</h6>
+                                            <small class="text-liquid-muted">{{ $variaciones->count() }} tamaños</small>
+                                        </div>
+                                        <div class="mt-3">
+                                            <span class="product-price fs-6 text-accent">Ver opciones</span>
                                         </div>
                                     </div>
                                 </div>
@@ -78,148 +86,175 @@
             </div>
         </div>
 
-        <!-- COLUMNA DERECHA: RESUMEN DE LA COMANDA -->
-        <div class="col-md-4 col-lg-3">
-            <div class="card shadow-sm sticky-top" style="top: 15px;">
-                <div class="card-header bg-dark text-white text-center fw-bold">
-                    ESTADO DE LA MESA
-                </div>
-                <div class="card-body p-0" style="max-height: 60vh; overflow-y: auto;">
-                    
-                    <!-- SECCIÓN 1: LISTO PARA SERVIR (Aparece cuando el cocinero le da en Listo) -->
-                    @if(isset($detallesListo) && count($detallesListo) > 0)
-                        <div class="bg-success bg-opacity-25 p-2 border-bottom border-success">
-                            <h6 class="text-success fw-bold text-center mb-2" style="font-size: 0.85rem;">✔ LISTO PARA SERVIR</h6>
-                            <ul class="list-group list-group-flush mb-1">
-                            @foreach($detallesListo as $detalle)
-                                <li class="list-group-item d-flex justify-content-between align-items-start px-2 bg-transparent py-1 border-0">
-                                    <div class="ms-1 me-auto" style="font-size: 0.85rem;">
-                                        <div class="text-dark fw-bold">{{ $detalle->nombre }}</div>
-                                    </div>
-                                </li>
-                            @endforeach
-                            </ul>
-                        </div>
-                    @endif
-
-                    <!-- SECCIÓN 2: YA EN COCINA -->
-                    @if(isset($detallesCocina) && count($detallesCocina) > 0)
-                        <div class="bg-warning bg-opacity-25 p-2 border-bottom border-warning">
-                            <h6 class="text-dark fw-bold text-center mb-2" style="font-size: 0.85rem;">👨‍🍳 YA EN COCINA</h6>
-                            <ul class="list-group list-group-flush mb-1">
-                            @foreach($detallesCocina as $detalle)
-                                <li class="list-group-item d-flex justify-content-between align-items-start px-2 bg-transparent py-1 border-0">
-                                    <div class="ms-1 me-auto" style="font-size: 0.85rem;">
-                                        <div class="text-dark">{{ $detalle->nombre }}</div>
-                                    </div>
-                                </li>
-                            @endforeach
-                            </ul>
-                        </div>
-                    @endif
-
-                    <!-- SECCIÓN 3: NUEVOS PRODUCTOS -->
-                    <div class="p-2 bg-white">
-                        <h6 class="text-primary fw-bold text-center mt-2 mb-2" style="font-size: 0.85rem;">NUEVOS PRODUCTOS</h6>
-                        <ul class="list-group list-group-flush" id="lista-comanda">
-                            <li class="list-group-item text-center text-muted py-4 border-0">Agrega productos...</li>
-                        </ul>
+        <div class="col-md-4 col-lg-3 comanda-lateral p-3">
+            <h5 class="text-center fw-bold text-accent mb-3">COMANDERO</h5>
+            
+            <div class="flex-grow-1 overflow-auto pe-2" id="scroll-comanda">
+                @if(isset($detallesListo) && count($detallesListo) > 0)
+                    <div class="mb-3">
+                        <p class="small text-success fw-bold mb-2">● LISTO PARA SERVIR</p>
+                        @foreach($detallesListo as $detalle)
+                            <div class="item-comanda border-success py-1 px-2 mb-1" style="background: rgba(46, 204, 113, 0.1);">
+                                <span class="text-white small">{{ $detalle->nombre }}</span>
+                            </div>
+                        @endforeach
                     </div>
+                @endif
+
+                @if(isset($detallesCocina) && count($detallesCocina) > 0)
+                    <div class="mb-3">
+                        <p class="small text-warning fw-bold mb-2">● EN COCINA</p>
+                        @foreach($detallesCocina as $detalle)
+                            <div class="item-comanda border-warning py-1 px-2 mb-1" style="background: rgba(241, 196, 15, 0.1);">
+                                <span class="text-white small">{{ $detalle->nombre }}</span>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+
+                <p class="small text-accent fw-bold mb-2">● NUEVA SELECCIÓN</p>
+                <div id="lista-comanda">
+                    <div class="text-center text-liquid-muted py-4 small">Orden vacía</div>
+                </div>
+            </div>
+
+            <div class="pt-3 border-top border-secondary">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="text-liquid-muted">TOTAL:</span>
+                    <span class="fs-4 fw-bold text-white" id="total-comanda">$0.00</span>
                 </div>
                 
-                <div class="card-footer bg-light border-top border-2">
-                    <div class="d-flex justify-content-between fw-bold fs-5 mb-3 text-danger">
-                        <span>TOTAL NUEVO:</span>
-                        <span id="total-comanda">$0.00</span>
-                    </div>
-                    
-                    <form id="form-pedido" action="{{ route('mesero.guardar_pedido', $mesa->mesa_id) }}" method="POST">
-                        @csrf
-                        <input type="hidden" name="json_pedido" id="json_pedido">
-                        <button type="button" class="btn btn-primary w-100 fw-bold py-2" onclick="prepararEnvio()">
-                            ENVIAR A COCINA
-                        </button>
-                    </form>
-                </div>
+                <form id="form-pedido" action="{{ route('mesero.guardar_pedido', $mesa->mesa_id) }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="json_pedido" id="json_pedido">
+                    <button type="button" class="btn btn-sr-pizza w-100 fw-bold" onclick="enviarAlBack()">
+                        ENVIAR A COCINA
+                    </button>
+                </form>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Lógica JavaScript para hacer la pantalla rápida sin recargar la página -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<div class="modal fade" id="modalTamanos" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="background: var(--bg-darker, #1a1a1a); border: 1px solid var(--glass-border, #333);">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title fw-bold text-accent" id="modalTamanosTitulo">Seleccionar Tamaño</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body" id="modalTamanosCuerpo">
+        </div>
+    </div>
+  </div>
+</div>
+
 <script>
     let comanda = [];
-    let totalCuenta = 0;
+    let total = 0;
 
-    // Función para agregar productos
-    function agregarPlatillo(id, nombre, precio) {
-        // RF-06: Solicitamos una nota personalizada al instante
-        let nota = prompt(`Instrucciones especiales para: ${nombre}\n(Dejar en blanco si no hay nota)`);
-        
-        // Si el usuario da "Cancelar" en el cuadro de texto, detenemos la inserción
-        if (nota === null) return; 
+    // Inicializamos el modal de Bootstrap
+    let modalTamanosInstance = null;
+    document.addEventListener("DOMContentLoaded", function() {
+        modalTamanosInstance = new bootstrap.Modal(document.getElementById('modalTamanos'));
+    });
 
-        comanda.push({ id: id, nombre: nombre, precio: precio, nota: nota });
-        totalCuenta += precio;
+    // Función para mostrar el modal de tamaños
+    function abrirModalTamanos(elemento) {
+        const nombreProducto = elemento.getAttribute('data-nombre');
+        const variaciones = JSON.parse(elemento.getAttribute('data-variaciones'));
         
-        dibujarComanda();
+        document.getElementById('modalTamanosTitulo').innerText = nombreProducto;
+        const cuerpo = document.getElementById('modalTamanosCuerpo');
+        cuerpo.innerHTML = '';
+
+        // Iterar sobre cada tamaño y crear un botón
+        variaciones.forEach(prod => {
+            const agotado = prod.stock_disponible < 1;
+            const btnClass = agotado ? 'btn-outline-secondary disabled' : 'btn-outline-accent';
+            const precioF = parseFloat(prod.precio).toFixed(2);
+            
+            // Si tiene stock, le añadimos el evento onclick
+            const accionClick = agotado ? '' : `onclick="seleccionarTamano(${prod.producto_id}, '${nombreProducto}', '${prod.tamano}', ${prod.precio}, ${prod.stock_disponible})"`;
+
+            cuerpo.innerHTML += `
+                <div class="mb-2">
+                    <button type="button" class="btn ${btnClass} w-100 d-flex justify-content-between align-items-center p-3 text-white" ${accionClick}>
+                        <span class="fw-bold">${prod.tamano}</span>
+                        <span>$${precioF}</span>
+                    </button>
+                    ${agotado ? '<div class="text-danger small fw-bold mt-1 text-center">AGOTADO</div>' : ''}
+                </div>
+            `;
+        });
+
+        modalTamanosInstance.show();
     }
 
-    // Función para dibujar la lista en la pantalla
-    function dibujarComanda() {
-        let listaHTML = document.getElementById('lista-comanda');
-        listaHTML.innerHTML = '';
+    // Función intermedia para armar el nombre final y cerrar el modal
+    function seleccionarTamano(id, nombreBase, tamano, precio, stock) {
+        modalTamanosInstance.hide();
+        // Concatenamos para que la orden se vea bien (ej: "Pizza Hawaiana (Familiar)")
+        const nombreParaComanda = `${nombreBase} (${tamano})`;
+        agregarPlatillo(id, nombreParaComanda, precio, stock);
+    }
+
+    // Tu lógica original intacta
+    function agregarPlatillo(id, nombre, precio, stock) {
+        if (stock < 1) {
+            alert("Insumos insuficientes.");
+            return;
+        }
+
+        let nota = prompt(`Nota para ${nombre}:`, "");
+        if (nota === null) return; 
+
+        comanda.push({ id: id, nombre: nombre, precio: parseFloat(precio), nota: nota });
+        total += parseFloat(precio);
+        pintarComanda();
+    }
+
+    function pintarComanda() {
+        const div = document.getElementById('lista-comanda');
+        div.innerHTML = '';
 
         if (comanda.length === 0) {
-            listaHTML.innerHTML = '<li class="list-group-item text-center text-muted py-4">Orden vacía</li>';
+            div.innerHTML = '<div class="text-center text-liquid-muted py-4 small">Orden vacía</div>';
         } else {
-            comanda.forEach((item, index) => {
-                let htmlNota = item.nota ? `<br><span class="badge bg-secondary mt-1 text-wrap text-start">Nota: ${item.nota}</span>` : '';
-                listaHTML.innerHTML += `
-                    <li class="list-group-item d-flex justify-content-between align-items-start px-2">
-                        <div class="ms-1 me-auto" style="font-size: 0.9rem;">
-                            <div class="fw-bold">${item.nombre}</div>
-                            <span class="text-success">$${item.precio.toFixed(2)}</span>
-                            ${htmlNota}
+            comanda.forEach((item, i) => {
+                div.innerHTML += `
+                    <div class="item-comanda d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <div class="text-white small fw-bold">${item.nombre}</div>
+                            <div class="text-accent small">$${item.precio.toFixed(2)}</div>
+                            ${item.nota ? `<div class="text-muted fst-italic" style="font-size:10px;">"${item.nota}"</div>` : ''}
                         </div>
-                        <button class="btn btn-sm text-danger fw-bold" onclick="quitarPlatillo(${index})">X</button>
-                    </li>
+                        <button type="button" class="btn btn-sm text-danger p-0" onclick="quitar(${i})">✕</button>
+                    </div>
                 `;
             });
         }
-        document.getElementById('total-comanda').innerText = '$' + totalCuenta.toFixed(2);
+        document.getElementById('total-comanda').innerText = '$' + total.toFixed(2);
+        const s = document.getElementById('scroll-comanda');
+        s.scrollTop = s.scrollHeight;
     }
 
-    // Función para eliminar un producto de la lista
-    function quitarPlatillo(index) {
-        totalCuenta -= comanda[index].precio;
-        comanda.splice(index, 1);
-        dibujarComanda();
+    function quitar(i) {
+        total -= comanda[i].precio;
+        comanda.splice(i, 1);
+        pintarComanda();
     }
 
-    // Función final antes de enviar a PHP
-    function prepararEnvio() {
+    function enviarAlBack() {
         if (comanda.length === 0) {
-            alert("No puedes enviar una orden vacía a cocina.");
+            alert("No has seleccionado productos.");
             return;
         }
-        
-        alert("¡Comanda armada perfectamente en memoria!\nTotal de artículos: " + comanda.length + "\nPronto conectaremos este botón al Back-end.");
-    }
-      // Función final que empaqueta todo y lo manda a Laravel
-    function prepararEnvio() {
-        if (comanda.length === 0) {
-            alert("No has agregado ningún producto nuevo.");
-            return;
-        }
-        
-        // Empaquetamos la comanda temporal en el input oculto
         document.getElementById('json_pedido').value = JSON.stringify(comanda);
-        // ¡Enviamos al Back-end!
         document.getElementById('form-pedido').submit();
     }
-
 </script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

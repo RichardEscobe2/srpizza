@@ -1,0 +1,470 @@
+/* public/css/estilos.css */
+
+:root {
+    /* Colores Corporativos Sr. Pizza */
+    --bg-dark: #2B2E38;
+    --bg-darker: #1E2027;
+    --accent-orange: #F08401;
+    --accent-orange-hover: #f59b15;
+    --unified-red: #E74C3C; /* Único rojo para todo el sistema */
+    --unified-red-hover: #C0392B;
+    --text-main: #f8f9fa;
+    --text-muted: #adb5bd;
+    
+    /* Variables para el efecto Liquid Crystal / Glassmorphism */
+    --glass-bg: rgba(43, 46, 56, 0.6);
+    --glass-border: rgba(237, 145, 9, 0.25);
+    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+}
+body {
+    background-color: var(--bg-dark);
+    background: radial-gradient(circle at top left, var(--bg-dark), var(--bg-darker));
+    color: var(--text-main);
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    min-height: 100vh;
+    margin: 0;
+    /* Eliminamos el flex, align-items y justify-content de aquí */
+}
+
+/* Creamos una nueva clase solo para centrar vistas como el Login */
+.pantalla-centrada {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+/* =========================================
+   EFECTO LIQUID CRYSTAL (GLASSMORPHISM)
+   ========================================= */
+.liquid-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    border-radius: 15px;
+    padding: 40px;
+    width: 100%;
+    max-width: 400px;
+    color: var(--text-main);
+}
+
+/* =========================================
+   BOTONES GLOBALES
+   ========================================= */
+.btn-sr-pizza {
+    background-color: var(--accent-orange);
+    color: white;
+    border: none;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    height: 48px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(237, 145, 9, 0.3);
+}
+
+.btn-sr-pizza:hover {
+    background-color: var(--accent-orange-hover);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(237, 145, 9, 0.5);
+}
+
+.btn-danger-unified {
+    background-color: var(--unified-red);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-danger-unified:hover {
+    background-color: var(--unified-red-hover);
+    color: white;
+}
+
+/* =========================================
+   INPUTS ESTILO OSCURO
+   ========================================= */
+.liquid-input {
+    background-color: rgba(0, 0, 0, 0.2) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: var(--text-main) !important;
+    border-radius: 8px;
+}
+
+.liquid-input:focus {
+    background-color: rgba(0, 0, 0, 0.3) !important;
+    border-color: var(--accent-orange) !important;
+    box-shadow: 0 0 10px rgba(237, 145, 9, 0.4) !important;
+    color: white !important;
+}
+
+.liquid-input::placeholder {
+    color: rgba(255, 255, 255, 0.4) !important;
+}
+
+/* Contenedor del ojito de contraseña */
+.liquid-input-group-text {
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-left: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.liquid-input-group-text:hover {
+    color: var(--accent-orange);
+}
+
+/* Títulos y textos */
+.text-accent {
+    color: var(--accent-orange) !important;
+}
+.text-liquid-muted {
+    color: var(--text-muted) !important;
+}
+
+
+/* =========================================
+   NAVBAR GLOBAL (Para todos los módulos)
+   ========================================= */
+.liquid-navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 25px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(15px);
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.btn-outline-accent {
+    color: var(--accent-orange);
+    border: 1px solid var(--accent-orange);
+    background: transparent;
+    transition: all 0.3s ease;
+}
+
+.btn-outline-accent:hover {
+    background: var(--accent-orange);
+    color: white;
+    box-shadow: 0 0 10px rgba(237, 145, 9, 0.4);
+}
+
+/* =========================================
+   TARJETAS DE MESAS (GLASSMORPHISM)
+   ========================================= */
+.mesa-liquid-card {
+    background: rgba(30, 32, 39, 0.6); /* Un poco más oscuro que el fondo para dar contraste */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 25px 20px;
+    text-align: center;
+    color: var(--text-main);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+}
+.user-badge {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-main);
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.user-badge span {
+    color: var(--accent-orange);
+    text-transform: uppercase;
+    margin-left: 5px;
+}
+.mesa-liquid-card:hover {
+    transform: translateY(-5px);
+}
+
+/* Bordes y resplandores según el estado */
+.mesa-disponible {
+    border-color: rgba(46, 204, 113, 0.4);
+    box-shadow: 0 5px 20px rgba(46, 204, 113, 0.1);
+}
+.mesa-ocupada {
+    border-color: rgba(231, 76, 60, 0.4);
+    box-shadow: 0 5px 20px rgba(231, 76, 60, 0.15);
+}
+.mesa-sucia {
+    border-color: rgba(241, 196, 15, 0.4);
+    box-shadow: 0 5px 20px rgba(241, 196, 15, 0.1);
+}
+
+/* Badges (Etiquetas) translúcidas */
+.liquid-badge {
+    padding: 6px 15px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    background: rgba(0, 0, 0, 0.4);
+    display: inline-block;
+}
+
+.badge-disponible { color: #2ecc71; border: 1px solid rgba(46, 204, 113, 0.3); }
+.badge-ocupada { color: var(--unified-red); border: 1px solid rgba(231, 76, 60, 0.3); }
+.badge-sucia { color: #f1c40f; border: 1px solid rgba(241, 196, 15, 0.3); }
+
+/* Botones interactivos de las mesas */
+.btn-mesa {
+    background: transparent;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-mesa-disponible {
+    color: #2ecc71;
+    border: 1px solid #2ecc71;
+}
+.btn-mesa-disponible:hover {
+    background: #2ecc71;
+    color: var(--bg-dark);
+    box-shadow: 0 0 15px rgba(46, 204, 113, 0.4);
+}
+
+.btn-mesa-ocupada {
+    color: var(--unified-red);
+    border: 1px solid var(--unified-red);
+}
+.btn-mesa-ocupada:hover {
+    background: var(--unified-red);
+    color: white;
+    box-shadow: 0 0 15px rgba(231, 76, 60, 0.4);
+}
+
+.btn-mesa-sucia {
+    color: #f1c40f;
+    border: 1px solid #f1c40f;
+}
+.btn-mesa-sucia:hover {
+    background: #f1c40f;
+    color: var(--bg-dark);
+    box-shadow: 0 0 15px rgba(241, 196, 15, 0.4);
+}
+
+
+
+/* =========================================
+   MENÚ DE PRODUCTOS (LIQUID CRYSTAL)
+   ========================================= */
+.nav-pills .nav-link {
+    color: var(--text-muted);
+    border-radius: 8px;
+    margin-right: 5px;
+    transition: all 0.3s ease;
+}
+
+.nav-pills .nav-link.active {
+    background-color: var(--accent-orange) !important;
+    color: white !important;
+    box-shadow: 0 4px 15px rgba(237, 145, 9, 0.3);
+}
+
+.product-liquid-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.product-liquid-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--accent-orange);
+    transform: translateY(-3px);
+}
+
+.product-price {
+    color: var(--accent-orange);
+    font-weight: 700;
+}
+
+/* =========================================
+   RESUMEN DE COMANDA (STICKET LATERAL)
+   ========================================= */
+.comanda-container {
+    background: var(--bg-darker);
+    border-left: 1px solid var(--glass-border);
+    height: calc(100vh - 70px);
+    position: sticky;
+    top: 70px;
+}
+
+.item-comanda {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    padding: 10px;
+}
+
+.status-badge-mini {
+    font-size: 0.65rem;
+    padding: 3px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+
+/* =========================================
+   KDS - COMANDAS DE COCINA
+   ========================================= */
+.kds-container {
+    display: flex;
+    flex-nowrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 20px;
+    gap: 20px;
+    height: calc(100vh - 120px);
+    align-items: flex-start;
+}
+
+.kds-liquid-card {
+    min-width: 320px;
+    max-width: 320px;
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+    max-height: 100%;
+}
+
+.kds-card-header {
+    padding: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(237, 145, 9, 0.05);
+    border-radius: 15px 15px 0 0;
+}
+
+.kds-card-body {
+    padding: 15px;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+.kds-item {
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.kds-quantity {
+    color: var(--accent-orange);
+    font-weight: 800;
+    font-size: 1.1rem;
+    margin-right: 10px;
+}
+
+.kds-note {
+    background: rgba(237, 145, 9, 0.1);
+    color: var(--accent-orange);
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-top: 5px;
+    border-left: 3px solid var(--accent-orange);
+}
+
+/* Personalización del scrollbar para que se vea "liquid" */
+::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    background: var(--bg-darker);
+}
+::-webkit-scrollbar-thumb {
+    background: var(--accent-orange);
+    border-radius: 10px;
+}
+
+/* =========================================
+   CAJA LIQUID CRYSTAL V3 (ESTABLE)
+   ========================================= */
+
+/* Contenedor tipo POS */
+.pos-container {
+    display: flex;
+    height: calc(100vh - 80px); /* Altura fija restando la navbar */
+    gap: 15px;
+    padding: 15px;
+}
+
+/* Paneles de Cristal */
+.pos-panel {
+    background: rgba(20, 22, 26, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Tablas Estilo Terminal */
+.terminal-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.terminal-table thead th {
+    background: rgba(237, 145, 9, 0.15);
+    color: var(--accent-orange);
+    padding: 12px;
+    text-align: left;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    border-bottom: 2px solid var(--accent-orange);
+}
+
+.terminal-table tbody td {
+    padding: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    color: #e0e0e0;
+}
+
+.terminal-row-active {
+    background: rgba(237, 145, 9, 0.2) !important;
+    border-left: 4px solid var(--accent-orange) !important;
+}
+
+/* Panel de totales (Derecha inferior) */
+.pos-checkout {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px dashed var(--glass-border);
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: auto;
+}
+
+.pos-total-text {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--accent-orange);
+    text-shadow: 0 0 10px rgba(237, 145, 9, 0.3);
+}
+
+/* Scrollbar estilo neón */
+.custom-scroll::-webkit-scrollbar { width: 6px; }
+.custom-scroll::-webkit-scrollbar-track { background: transparent; }
+.custom-scroll::-webkit-scrollbar-thumb { background: var(--accent-orange); border-radius: 10px; }

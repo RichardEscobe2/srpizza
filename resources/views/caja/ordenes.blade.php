@@ -5,222 +5,187 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Caja - Sr. Pizza</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('css/estilos.css') }}">
     <style>
-        body { background-color: #1e1e1e; color: white; }
-        .header { background-color: #000; padding: 15px; border-bottom: 3px solid #f15a24; }
-        .table-dark-custom { background-color: #2c2c2c; color: white; }
-        .table-hover tbody tr:hover { background-color: #3d3d3d; cursor: pointer; }
-        .panel-cuenta { background-color: #2b2b2b; border-radius: 8px; padding: 20px; }
-        .btn-cobrar { background-color: #f15a24; color: white; font-weight: bold; border: none; }
-        .btn-cobrar:hover { background-color: #d94e1e; color: white; }
+        body { display: block; overflow: hidden; height: 100vh; }
     </style>
 </head>
 <body>
 
-<div class="header d-flex justify-content-between align-items-center mb-4">
-    <h3 style="color: #f15a24; margin: 0;">Sr. Pizza - Módulo de Caja</h3>
-    <div>
-        <span class="me-3">Cajero: {{ Session::get('nombre', 'Usuario') }}</span>
-        <a href="{{ route('logout') }}" class="btn btn-sm btn-danger">Cerrar Sesión</a>
+
+<nav class="liquid-navbar">
+    <h3 class="m-0 fw-bold text-accent">Sr. Pizza</h3>
+    <div class="d-flex align-items-center gap-3">
+        <span class="text-liquid-muted d-none d-md-block">
+            Cajero: <span class="fw-bold text-white">{{ Session::get('nombre', 'Usuario') }}</span>
+        </span>
+        {{-- CORRECCIÓN: apuntaba a mesero.mesas, ahora apunta a cocina.kds --}}
+        <a href="{{ route('logout') }}" class="btn btn-sm btn-danger-unified px-3">Cerrar Sesión</a>
     </div>
-</div>
+</nav>
 
-<div class="container-fluid px-4">
-    @if(session('success'))
-        <div class="alert alert-success fw-bold">{{ session('success') }}</div>
-    @endif
+<div class="pos-container">
+    
+    <div class="col-md-4 pos-panel">
+        <div class="p-3 border-bottom border-secondary d-flex justify-content-between align-items-center">
+            <h6 class="m-0 fw-bold text-white">ÓRDENES PENDIENTES</h6>
+            <a href="{{ route('caja.ordenes') }}" class="btn btn-xs btn-outline-accent py-0 px-2">↻</a>
+        </div>
+        <div class="flex-grow-1 overflow-auto custom-scroll">
+            <table class="terminal-table">
+                <thead>
+                    <tr>
+                        <th>MESA</th>
+                        <th class="text-end">TOTAL</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($pedidos as $ped)
+                        <tr onclick="location.href='/caja/ordenes?pedido_id={{ $ped->pedido_id }}'" 
+                            class="cursor-pointer {{ (isset($pedidoSeleccionado) && $pedidoSeleccionado->pedido_id == $ped->pedido_id) ? 'terminal-row-active' : '' }}"
+                            style="cursor: pointer;">
+                            <td class="fw-bold">MESA {{ $ped->mesa->numero_mesa ?? 'N/A' }}</td>
+                            <td class="text-end text-accent fw-bold">${{ number_format($ped->total, 2) }}</td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="2" class="text-center py-5 text-liquid-muted">No hay cuentas pendientes</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-    <div class="row g-4">
-        <!-- COLUMNA IZQUIERDA: LISTA DE ÓRDENES PENDIENTES -->
-        <div class="col-md-5">
-            <div class="card bg-dark border-secondary shadow">
-                <div class="card-header border-secondary d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Órdenes Pendientes</h5>
-                    <a href="{{ route('caja.ordenes') }}" class="btn btn-sm btn-outline-light">↻ Actualizar</a>
+    <div class="col-md-8 pos-panel">
+        @if($pedidoSeleccionado)
+            <div class="p-4 d-flex flex-column h-100">
+                <div class="d-flex justify-content-between align-items-start mb-4">
+                    <div>
+                        <h2 class="m-0 fw-bold text-white">MESA {{ $pedidoSeleccionado->mesa->numero_mesa ?? 'N/A' }}</h2>
+                        <span class="text-accent small fw-bold">ID DE ORDEN: #{{ $pedidoSeleccionado->pedido_id }}</span>
+                    </div>
+                    <div class="text-end text-liquid-muted">
+                        {{ \Carbon\Carbon::now()->format('d/m/Y H:i') }}
+                    </div>
                 </div>
-                <div class="card-body p-0">
-                    <table class="table table-dark table-hover mb-0">
+
+                <div class="flex-grow-1 overflow-auto custom-scroll mb-4" style="background: rgba(0,0,0,0.2); border-radius: 8px;">
+                    <table class="terminal-table">
                         <thead>
                             <tr>
-                                <th>Mesa</th>
-                                <th>Estado</th>
-                                <th>Total (Sin IVA)</th>
-                                <th>Acción</th>
+                                <th>CANT</th>
+                                <th>PRODUCTO</th>
+                                <th class="text-end">P. UNIT</th>
+                                <th class="text-end">TOTAL</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($pedidos as $ped)
+                            @foreach($detalles as $det)
                                 <tr>
-                                    <td class="fw-bold text-warning">Mesa {{ $ped->mesa->numero_mesa ?? 'N/A' }}</td>
-                                    <td>{{ $ped->estado }}</td>
-                                    <td>${{ number_format($ped->total, 2) }}</td>
-                                    <td>
-                                        <a href="{{ route('caja.ordenes', ['pedido_id' => $ped->pedido_id]) }}" class="btn btn-sm btn-outline-info">Ver Cuenta</a>
-                                    </td>
+                                    <td class="text-accent fw-bold">{{ (int)$det->cantidad }}x</td>
+                                    <td>{{ $det->producto->nombre ?? 'N/A' }}</td>
+                                    <td class="text-end text-liquid-muted">${{ number_format($det->precio_unitario, 2) }}</td>
+                                    <td class="text-end fw-bold text-white">${{ number_format($det->cantidad * $det->precio_unitario, 2) }}</td>
                                 </tr>
-                            @empty
-                                <tr><td colspan="4" class="text-center py-4 text-muted">No hay cuentas pendientes por cobrar.</td></tr>
-                            @endforelse
+                            @endforeach
                         </tbody>
                     </table>
                 </div>
-            </div>
-        </div>
 
-        <!-- COLUMNA DERECHA: DETALLE DE CUENTA A COBRAR -->
-        <div class="col-md-7">
-            <div class="panel-cuenta shadow">
-                <h5 class="border-bottom border-secondary pb-2 mb-3">Detalle de Cuenta</h5>
-                
-                @if($pedidoSeleccionado)
-                    <h6 class="text-warning mb-3">MESA {{ $pedidoSeleccionado->mesa->numero_mesa ?? 'N/A' }} | Orden #{{ $pedidoSeleccionado->pedido_id }}</h6>
-                    
-                    <div style="height: 300px; overflow-y: auto;" class="mb-3 bg-dark p-2 rounded">
-                        <table class="table table-dark table-sm mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Cant.</th>
-                                    <th>Producto</th>
-                                    <th class="text-end">Precio</th>
-                                    <th class="text-end">Subtotal</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($detalles as $det)
-                                    <tr>
-                                        <td>{{ $det->cantidad }}</td>
-                                        <td>{{ $det->producto->nombre ?? 'Desconocido' }}</td>
-                                        <td class="text-end">${{ number_format($det->precio_unitario, 2) }}</td>
-                                        <td class="text-end">${{ number_format($det->subtotal, 2) }}</td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-
-                   <!-- RESUMEN MATEMÁTICO CON DESCUENTO E IVA (RF-08) -->
-                    <div class="row text-end mb-4 align-items-center">
-                        
-                        <!-- Cambiamos text-muted por text-white -->
-                        <div class="col-8 text-white mb-2">Subtotal:</div>
-                        <div class="col-4 mb-2">${{ isset($subtotal) ? number_format($subtotal, 2) : '0.00' }}</div>
-                         <!-- CAMPO DE IVA 16% EN BLANCO -->
-                        <div class="col-8 text-white mb-2">IVA (16%):</div>
-                        <div class="col-4 mb-2" id="monto_iva">${{ isset($iva) ? number_format($iva, 2) : '0.00' }}</div>
-                        <!-- NUEVO CAMPO DE DESCUENTO DINÁMICO -->
-                        <div class="col-8 text-white d-flex justify-content-end align-items-center mb-2">
-                            Descuento: 
-                            <!-- Cambiamos a type="text" con inputmode="numeric" y agregamos el bloqueo de letras -->
-                            <input type="text" inputmode="numeric" id="descuento_porcentaje" 
-                                   class="form-control form-control-sm text-center mx-2 bg-dark text-white border-secondary" 
-                                   style="width: 70px;" value="0" min="0" max="100" 
-                                   oninput="this.value = this.value.replace(/[^0-9]/g, ''); calcularTotal()"> %
-                        </div>
-                        <div class="col-4 text-warning mb-2" id="monto_descuento">-$0.00</div>
-                        
-                       
-                        
-                        <div class="col-8 fs-4 fw-bold mt-2 border-top border-secondary pt-2">TOTAL A PAGAR:</div>
-                        <div class="col-4 fs-4 fw-bold text-success mt-2 border-top border-secondary pt-2" id="total_pagar_texto">${{ isset($totalAPagar) ? number_format($totalAPagar, 2) : '0.00' }}</div>
-                    </div>
-
-                   <!-- FORMULARIO DE COBRO SIMULADO (RF-09, RF-10) -->
-                    <form action="{{ route('caja.procesar_pago', $pedidoSeleccionado->pedido_id) }}" method="POST" class="mb-2">
-                        @csrf
-                        <input type="hidden" name="total_final" id="total_final" value="{{ $totalAPagar }}">
-                        
-                        <div class="d-flex justify-content-between align-items-center bg-dark p-3 rounded mb-3 border border-secondary">
-                            <div>
-                                <span class="me-3 text-white">Método:</span>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="metodo" id="efectivo" value="efectivo" checked>
-                                    <label class="form-check-label text-white" for="efectivo">Efectivo</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="metodo" id="tarjeta" value="tarjeta">
-                                    <label class="form-check-label text-white" for="tarjeta">Tarjeta</label>
+                <div class="pos-checkout">
+                    <div class="row align-items-center">
+                        <div class="col-md-6 border-end border-secondary border-opacity-25">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="text-liquid-muted">Subtotal:</span>
+                                <span>${{ number_format($subtotal, 2) }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="text-liquid-muted">IVA (16%):</span>
+                                <span id="monto_iva">${{ number_format($iva, 2) }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                <span class="text-liquid-muted">Desc (%):</span>
+                                <div class="d-flex align-items-center gap-2">
+                                    <input type="text" id="descuento_porcentaje" class="form-control liquid-input text-center py-0" 
+                                           style="width: 60px; height: 26px; font-size: 0.8rem; border-color: var(--accent-orange) !important;" 
+                                           value="0" oninput="calcularTotal()">
+                                    <span class="text-danger fw-bold" id="monto_descuento">-$0.00</span>
                                 </div>
                             </div>
                         </div>
-
-                        <button type="submit" class="btn btn-cobrar w-100 fs-5 py-3 mb-2">COBRAR Y LIBERAR MESA</button>
-                    </form>
-
-
-                    <!-- BOTÓN DE CANCELACIÓN (RN-01) -->
-                    <form action="{{ route('caja.cancelar_pedido', $pedidoSeleccionado->pedido_id) }}" method="POST" 
-                          onsubmit="return confirm('⚠️ ADVERTENCIA: ¿Estás seguro de que deseas CANCELAR esta orden por completo? Esta acción quedará registrada en la bitácora de auditoría para revisión de la Gerencia.');">
-                        @csrf
-                        <button type="submit" class="btn btn-outline-danger w-100 fw-bold py-2">CANCELAR ORDEN</button>
-                    </form>
-
-                @else
-                    <div class="d-flex align-items-center justify-content-center h-100 text-muted" style="min-height: 300px;">
-                        <h4>Selecciona una cuenta de la lista para cobrar</h4>
+                        <div class="col-md-6 ps-4 text-center">
+                            <span class="text-accent fw-bold small">TOTAL A PAGAR</span>
+                            <div class="pos-total-text" id="total_pagar_texto">${{ number_format($totalAPagar, 2) }}</div>
+                            
+                            <form action="{{ route('caja.procesar_pago', $pedidoSeleccionado->pedido_id) }}" method="POST" class="mt-3">
+                                @csrf
+                                <input type="hidden" name="total_final" id="total_final" value="{{ $totalAPagar }}">
+                                <div class="d-flex justify-content-center gap-3 mb-3">
+                                    <div class="form-check small">
+                                        <input class="form-check-input" type="radio" name="metodo" id="efectivo" value="efectivo" checked>
+                                        <label class="form-check-label text-white" for="efectivo">EFECTIVO</label>
+                                    </div>
+                                    <div class="form-check small">
+                                        <input class="form-check-input" type="radio" name="metodo" id="tarjeta" value="tarjeta">
+                                        <label class="form-check-label text-white" for="tarjeta">TARJETA</label>
+                                    </div>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-sr-pizza w-100 fw-bold">COBRAR</button>
+                                    <button type="button" class="btn btn-outline-danger" onclick="confirmarCancelacion()">✕</button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
-                @endif
+                </div>
             </div>
-        </div>
+            <form id="form-cancelar" action="{{ route('caja.cancelar_pedido', $pedidoSeleccionado->pedido_id) }}" method="POST" class="d-none">@csrf</form>
+        @else
+            <div class="h-100 d-flex flex-column align-items-center justify-content-center opacity-25">
+                <h1 style="font-size: 5rem;">💳</h1>
+                <h4 class="fw-bold">TERMINAL DE PAGO</h4>
+                <p>Seleccione una mesa para iniciar el proceso de cobro.</p>
+            </div>
+        @endif
     </div>
 </div>
 
-
-
-
-<!-- LÓGICA MATEMÁTICA EN TIEMPO REAL CON LÍMITE DE ROL -->
 <script>
     function calcularTotal() {
-        // 1. Variables desde PHP
-        let subtotal = {{ isset($subtotal) ? $subtotal : 0 }};
-        let limitePermitido = {{ isset($limiteDescuento) ? $limiteDescuento : 0 }}; // El límite de este usuario (ej. 20)
+        let subtotal = {{ $subtotal ?? 0 }};
+        let limite = {{ $limiteDescuento ?? 0 }};
+        let inp = document.getElementById('descuento_porcentaje');
+        let porc = parseFloat(inp.value) || 0;
         
-        // 2. Leemos el porcentaje tecleado
-        let inputDescuentoObj = document.getElementById('descuento_porcentaje');
-        let porcentaje = parseFloat(inputDescuentoObj.value) || 0;
-        
-        // 3. REGLA DE NEGOCIO: Validamos límites
-        if (porcentaje < 0) {
-            porcentaje = 0;
+        if (porc > limite) {
+            alert('Límite de descuento excedido: ' + limite + '%');
+            porc = limite;
+            inp.value = limite;
         }
         
-        if (porcentaje > limitePermitido) {
-            // Si intenta poner 50 y su límite es 20, le avisamos y lo forzamos a 20
-            alert('Acción denegada: Tu rol solo tiene autorización para un máximo de ' + parseFloat(limitePermitido) + '% de descuento.');
-            porcentaje = limitePermitido;
-            inputDescuentoObj.value = limitePermitido; // Regresamos el número en pantalla al máximo permitido
-        }
+        let mDesc = subtotal * (porc / 100);
+        let neto = subtotal - mDesc;
+        let iva = neto * 0.16;
+        let total = neto + iva;
         
-        // 4. Calculamos Matemática
-        let montoDescuento = subtotal * (porcentaje / 100);
-        let subtotalConDescuento = subtotal - montoDescuento;
-        
-        // 5. Calculamos el 16% de IVA 
-        let iva = subtotalConDescuento * 0.16;
-        let totalFinal = subtotalConDescuento + iva;
-        
-        // 6. Actualizamos Pantalla
-        document.getElementById('monto_descuento').innerText = "-$" + montoDescuento.toFixed(2);
+        document.getElementById('monto_descuento').innerText = "-$" + mDesc.toFixed(2);
         document.getElementById('monto_iva').innerText = "$" + iva.toFixed(2);
-        document.getElementById('total_pagar_texto').innerText = "$" + totalFinal.toFixed(2);
-        
-        // 7. Modificamos el valor que se irá a la BD
-        let inputTotalFinal = document.getElementById('total_final');
-        if (inputTotalFinal) {
-            inputTotalFinal.value = totalFinal.toFixed(2);
-        }
+        document.getElementById('total_pagar_texto').innerText = "$" + total.toFixed(2);
+        document.getElementById('total_final').value = total.toFixed(2);
+    }
+
+    function confirmarCancelacion() {
+        if(confirm('¿Seguro que deseas cancelar esta orden?')) document.getElementById('form-cancelar').submit();
     }
 </script>
 
-
-
-<!-- AUTO-IMPRESIÓN DE TICKET DESPUÉS DE COBRAR -->
 @if(session('ticket_id'))
     <script>
-        // Si el controlador nos manda un ticket_id, abrimos la ventana de impresión automáticamente
         window.onload = function() {
             window.open("{{ route('caja.imprimir_ticket', session('ticket_id')) }}", "Ticket", "width=400,height=600");
         };
     </script>
 @endif
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
