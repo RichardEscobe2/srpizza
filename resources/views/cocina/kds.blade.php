@@ -43,22 +43,56 @@
                         <small class="text-liquid-muted">Orden #{{ $pedido->pedido_id }}</small>
                     </div>
                     <div class="text-end">
-                        <div class="text-accent fw-bold fs-5">{{ \Carbon\Carbon::parse($pedido->fecha_hora)->format('H:i') }}</div>
+                        @php
+                            // Forzamos a que sea un número entero (int) y absoluto (abs) para evitar decimales o negativos
+                            $minutosEspera = (int) abs(\Carbon\Carbon::parse($pedido->fecha_hora)->diffInMinutes(now()));
+                            
+                            // Lógica de semáforo de tiempo (Naranja normal, Amarillo > 10m, Rojo > 15m)
+                            $colorTiempo = 'text-accent'; 
+                            if($minutosEspera >= 15) {
+                                $colorTiempo = 'text-danger'; 
+                            } elseif($minutosEspera >= 10) {
+                                $colorTiempo = 'text-warning'; 
+                            }
+                        @endphp
+                        
+                        <div class="{{ $colorTiempo }} fw-bold fs-5">
+                            ⏱ {{ $minutosEspera }} min
+                        </div>
                         <small class="text-liquid-muted">{{ $pedido->mesero }}</small>
                     </div>
                 </div>
 
-                <div class="kds-card-body">
+               <div class="kds-card-body">
                     <ul class="list-unstyled m-0">
-                        @foreach($detalles->where('pedido_id', $pedido->pedido_id) as $item)
+                        @php
+                            // Agrupamos los detalles para que no salgan repetidos
+                            $detallesOrden = $detalles->where('pedido_id', $pedido->pedido_id);
+                            
+                            $agrupadosCocina = $detallesOrden->groupBy(function($item) {
+                                return $item->producto_id . '|' . $item->comentarios;
+                            });
+                        @endphp
+
+                        @foreach($agrupadosCocina as $grupo)
+                            @php 
+                                $primerItem = $grupo->first(); 
+                                // Quitamos los decimales y sumamos
+                                $cantidadTotal = (int) $grupo->sum('cantidad'); 
+                                
+                                // Sacamos el tamaño usando la relación que ya tienes, sin hacer consultas raras
+                                $tamano = isset($primerItem->producto) ? $primerItem->producto->tamano : '';
+                                $nombreFinal = $tamano ? $primerItem->nombre . ' (' . $tamano . ')' : $primerItem->nombre;
+                            @endphp
+                            
                             <li class="kds-item">
                                 <div class="d-flex align-items-center">
-                                    <span class="kds-quantity">{{ $item->cantidad }}x</span>
-                                    <span class="text-white fw-bold fs-5">{{ $item->nombre }}</span>
+                                    <span class="kds-quantity">{{ $cantidadTotal }}x</span>
+                                    <span class="text-white fw-bold fs-5">{{ $nombreFinal }}</span>
                                 </div>
-                                @if($item->comentarios)
+                                @if($primerItem->comentarios)
                                     <div class="kds-note">
-                                        ⚠ {{ strtoupper($item->comentarios) }}
+                                        ⚠ {{ strtoupper($primerItem->comentarios) }}
                                     </div>
                                 @endif
                             </li>

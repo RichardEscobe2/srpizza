@@ -79,12 +79,31 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($detalles as $det)
+                            @php
+                                // Agrupamos los detalles por ID de producto para hacer el ticket limpio
+                                $agrupadosCaja = $detalles->groupBy('producto_id');
+                            @endphp
+
+                            @foreach($agrupadosCaja as $grupo)
+                                @php
+                                    $primerItem = $grupo->first();
+                                    // Sumamos las cantidades (si hay dos de 1x, ahora será 2x)
+                                    $cantidadTotal = (int) $grupo->sum('cantidad');
+                                    
+                                    // Obtenemos el tamaño y armamos el nombre final (Ej: Pizza Peperoni (Familiar))
+                                    $tamano = isset($primerItem->producto) ? $primerItem->producto->tamano : '';
+                                    $nombreBase = $primerItem->producto->nombre ?? 'Desconocido';
+                                    $nombreFinal = $tamano ? $nombreBase . ' (' . $tamano . ')' : $nombreBase;
+                                    
+                                    // Cálculos financieros por grupo
+                                    $precioUnitario = $primerItem->precio_unitario;
+                                    $totalFila = $cantidadTotal * $precioUnitario;
+                                @endphp
                                 <tr>
-                                    <td class="text-accent fw-bold">{{ (int)$det->cantidad }}x</td>
-                                    <td>{{ $det->producto->nombre ?? 'N/A' }}</td>
-                                    <td class="text-end text-liquid-muted">${{ number_format($det->precio_unitario, 2) }}</td>
-                                    <td class="text-end fw-bold text-white">${{ number_format($det->cantidad * $det->precio_unitario, 2) }}</td>
+                                    <td class="text-accent fw-bold">{{ $cantidadTotal }}x</td>
+                                    <td class="text-white">{{ $nombreFinal }}</td>
+                                    <td class="text-end text-liquid-muted">${{ number_format($precioUnitario, 2) }}</td>
+                                    <td class="text-end fw-bold text-white">${{ number_format($totalFila, 2) }}</td>
                                 </tr>
                             @endforeach
                         </tbody>

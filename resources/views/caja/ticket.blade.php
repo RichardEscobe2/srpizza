@@ -8,7 +8,7 @@
         /* Estilos específicos para Impresora Térmica de 80mm */
         body {
             font-family: 'Courier New', Courier, monospace;
-            font-size: 14px;
+            font-size: 13px; /* Reducimos ligeramente para que entren 4 columnas */
             color: #000;
             background: #fff;
             margin: 0;
@@ -20,9 +20,14 @@
         .text-left { text-align: left; }
         .bold { font-weight: bold; }
         .divider { border-top: 1px dashed #000; margin: 10px 0; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 4px 0; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        th, td { padding: 4px 0; word-wrap: break-word; }
         .item-row td { vertical-align: top; }
+        /* Ajuste de anchos para las 4 columnas */
+        .col-cant { width: 12%; }
+        .col-prod { width: 45%; }
+        .col-unit { width: 20%; font-size: 11px; color: #333; } /* Precio unitario un poco más pequeño */
+        .col-total { width: 23%; }
     </style>
 </head>
 <body>
@@ -46,23 +51,40 @@
     <table>
         <thead>
             <tr class="divider" style="border-bottom: 1px dashed #000;">
-                <th class="text-left" style="width: 15%;">Cant</th>
-                <th class="text-left" style="width: 55%;">Producto</th>
-                <th class="text-right" style="width: 30%;">Total</th>
+                <th class="text-left col-cant">Can</th>
+                <th class="text-left col-prod">Producto</th>
+                <th class="text-right col-unit">P.Unit</th>
+                <th class="text-right col-total">Total</th>
             </tr>
         </thead>
         <tbody>
-            @php $subtotal_calculado = 0; @endphp
-            @foreach($detalles as $item)
+            @php 
+                $subtotal_calculado = 0; 
+                // Agrupamos los detalles por ID de producto igual que en la terminal
+                $agrupadosTicket = $detalles->groupBy('producto_id');
+            @endphp
+            
+            @foreach($agrupadosTicket as $grupo)
                 @php 
-                    /* Calculamos el importe real multiplicando cantidad x precio_unitario */
-                    $importe_item = $item->cantidad * $item->precio_unitario;
-                    $subtotal_calculado += $importe_item; 
+                    $primerItem = $grupo->first();
+                    // Sumamos las cantidades (ej: 1x + 1x = 2)
+                    $cantidadTotal = (int) $grupo->sum('cantidad');
+                    
+                    // Obtenemos el tamaño y armamos el nombre final
+                    $tamano = isset($primerItem->producto) ? $primerItem->producto->tamano : '';
+                    $nombreBase = $primerItem->producto->nombre ?? 'Desconocido';
+                    $nombreFinal = $tamano ? $nombreBase . ' (' . $tamano . ')' : $nombreBase;
+                    
+                    // Cálculos financieros
+                    $precioUnitario = $primerItem->precio_unitario;
+                    $importe_fila = $cantidadTotal * $precioUnitario;
+                    $subtotal_calculado += $importe_fila; 
                 @endphp
                 <tr class="item-row">
-                    <td class="text-left">{{ (int)$item->cantidad }}</td>
-                    <td class="text-left">{{ $item->producto->nombre ?? 'Desconocido' }}</td>
-                    <td class="text-right">${{ number_format($importe_item, 2) }}</td>
+                    <td class="text-left bold col-cant">{{ $cantidadTotal }}</td>
+                    <td class="text-left col-prod">{{ $nombreFinal }}</td>
+                    <td class="text-right col-unit">${{ number_format($precioUnitario, 2) }}</td>
+                    <td class="text-right bold col-total">${{ number_format($importe_fila, 2) }}</td>
                 </tr>
             @endforeach
         </tbody>
@@ -70,7 +92,7 @@
 
     <div class="divider"></div>
 
-    <table>
+    <table style="width: 100%;">
         <tr>
             <td class="text-left bold">Subtotal Neto:</td>
             <td class="text-right">${{ number_format($subtotal_calculado, 2) }}</td>
