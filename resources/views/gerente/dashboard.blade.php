@@ -3,276 +3,504 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Gerencial - Sr. Pizza</title>
+    <title>Dashboard Gerencia - Sr. Pizza</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ asset('css/estilos.css') }}">
     <style>
-        /* Estilos estructurales básicos (sin diseño profundo por ahora) */
-        body { background-color: #1e1e1e; color: white; overflow-x: hidden; }
-        .header { background-color: #000; padding: 15px; border-bottom: 3px solid #f15a24; }
-        
-        /* Barra lateral estructural */
-        .sidebar { background-color: #000; min-height: 100vh; padding: 20px; border-right: 2px solid #333; }
-        .btn-sidebar { width: 100%; margin-bottom: 15px; background-color: #f15a24; color: white; font-weight: bold; border: none; padding: 10px; border-radius: 8px; text-align: center; }
-        .btn-sidebar.active { background-color: #d94e1e !important; color: white !important; }
-        
-        .content-area { padding: 30px; }
+        body { overflow: hidden; height: 100vh; }
     </style>
 </head>
 <body>
 
-<!-- ENCABEZADO SUPERIOR -->
-<div class="header d-flex justify-content-between align-items-center">
-    <h3 style="color: #f15a24; margin: 0;">Sr. Pizza</h3>
-    <div>
-        <span class="me-3">Gerente: {{ Session::get('nombre', 'Usuario') }}</span>
-        <a href="{{ route('logout') }}" class="btn btn-sm btn-danger">Cerrar Sesión</a>
+<nav class="liquid-navbar mb-4">
+    <h3 class="m-0 fw-bold text-accent">Sr. Pizza <span class="text-white fw-light">| GERENCIA</span></h3>
+    <div class="d-flex align-items-center gap-3">
+        <span class="text-liquid-muted d-none d-md-block">
+            Gerente: <span class="fw-bold text-white">{{ Session::get('nombre', 'Usuario') }}</span>
+        </span>
+        <a href="{{ route('logout') }}" class="btn btn-sm btn-danger-unified px-3">Cerrar Sesión</a>
     </div>
-</div>
+</nav>
 
-<div class="container-fluid">
-    <div class="row">
+<div class="container-fluid px-4 pb-4">
+    
+    @if(session('success')) 
+        <div class="alert alert-success text-center py-2 mx-auto mb-3" style="max-width: 600px; background: rgba(46, 204, 113, 0.1); color: #2ecc71; border: 1px solid rgba(46, 204, 113, 0.3);">
+            {{ session('success') }}
+        </div> 
+    @endif
+    @if($errors->any()) 
+        <div class="alert alert-danger text-center py-2 mx-auto mb-3" style="max-width: 600px; background: rgba(231, 76, 60, 0.1); color: #e74c3c; border: 1px solid rgba(231, 76, 60, 0.3);">
+            {{ $errors->first() }}
+        </div> 
+    @endif
+
+    <div class="dashboard-wrapper">
         
-        <!-- BARRA LATERAL IZQUIERDA (PANEL DE CONTROL) -->
-        <div class="col-md-2 sidebar">
-            <h6 class="text-center mb-4 text-muted fw-bold">PANEL DE CONTROL</h6>
+        <div class="liquid-sidebar">
+            <h6 class="text-liquid-muted mb-4 text-center text-uppercase tracking-wide" style="letter-spacing: 2px;">Módulos</h6>
+            <div class="nav nav-pills" id="gerenteTabs" role="tablist">
+                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-operacion">
+                    <i class="bi bi-display me-2"></i> Operación Piso
+                </button>
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-caja">
+                    <i class="bi bi-wallet2 me-2"></i> Finanzas / Caja
+                </button>
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-personal">
+                    <i class="bi bi-people me-2"></i> Personal
+                </button>
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-insumos">
+                    <i class="bi bi-box-seam me-2"></i> Insumos y Menú
+                </button>
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-auditoria">
+                    <i class="bi bi-shield-lock me-2"></i> Auditoría
+                </button>
+            </div>
             
-            <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
-                <button class="nav-link btn-sidebar active" id="tab-operacion" data-bs-toggle="pill" data-bs-target="#seccion-operacion" type="button" role="tab">Operación</button>
-                <button class="nav-link btn-sidebar" id="tab-personal" data-bs-toggle="pill" data-bs-target="#seccion-personal" type="button" role="tab">Personal</button>
-                <button class="nav-link btn-sidebar" id="tab-menu" data-bs-toggle="pill" data-bs-target="#seccion-menu" type="button" role="tab">Menú</button>
-                <button class="nav-link btn-sidebar" id="tab-insumos" data-bs-toggle="pill" data-bs-target="#seccion-insumos" type="button" role="tab">Insumos</button>
-                <button class="nav-link btn-sidebar" id="tab-caja" data-bs-toggle="pill" data-bs-target="#seccion-caja" type="button" role="tab">Caja</button>
+            <div class="mt-auto pt-3 border-top border-secondary border-opacity-25 text-center">
+                <small class="text-liquid-muted">Ventas de Hoy</small>
+                <h4 class="text-success m-0 fw-bold">${{ number_format($ingresosHoy, 2) }}</h4>
             </div>
         </div>
 
-        <!-- ÁREA CENTRAL DE CONTENIDO DINÁMICO -->
-        <div class="col-md-10 content-area">
-            <div class="tab-content" id="v-pills-tabContent">
-                
-               <!-- 1. SECCIÓN OPERACIÓN (Dashboard principal de monitoreo) -->
-                <div class="tab-pane fade show active" id="seccion-operacion" role="tabpanel">
-                    <div class="d-flex justify-content-between align-items-center border-bottom border-secondary pb-2 mb-4">
-                        <h3 class="m-0 text-white">SALA PRINCIPAL</h3>
-                        <a href="{{ route('gerente.dashboard') }}" class="btn btn-sm btn-outline-warning">↻ Actualizar</a>
-                    </div>
+        <div class="dashboard-content tab-content" id="gerenteTabsContent">
+            
+            <div class="tab-pane fade show active" id="tab-operacion">
+                <div class="row g-4">
                     
-                    <div class="row">
-                        <!-- MAPA DE MESAS (IZQUIERDA) -->
-                        <div class="col-md-8">
-                            <div class="row g-3">
-                                @foreach($mesas as $mesa)
-                                    <div class="col-md-4">
-                                        <div class="card bg-dark text-center border-2 
-                                            @if($mesa->estado == 'Disponible') border-success 
-                                            @elseif($mesa->estado == 'Ocupada') border-danger 
-                                            @else border-warning @endif" style="min-height: 120px;">
-                                            
-                                            <div class="card-body d-flex flex-column justify-content-center">
-                                                <h5 class="fw-bold text-white mb-1">MESA {{ $mesa->numero_mesa }}</h5>
-                                                
-                                                <div>
-                                                    <span class="badge 
-                                                        @if($mesa->estado == 'Disponible') bg-success 
-                                                        @elseif($mesa->estado == 'Ocupada') bg-danger 
-                                                        @else bg-warning text-dark @endif">
-                                                        {{ mb_strtoupper($mesa->estado) }}
-                                                    </span>
-                                                </div>
-
-                                               <!-- Temporizador de consumo si está ocupada -->
-                                                @if($mesa->estado == 'Ocupada' && $mesa->pedido_fecha)
-                                                    <p class="text-danger small mt-2 mb-0 fw-bold">
-                                                        ⏱️ {{ round(abs(\Carbon\Carbon::parse($mesa->pedido_fecha)->diffInMinutes(now()))) }} min
-                                                    </p>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endforeach
+                    <div class="col-md-6 d-flex flex-column gap-4">
+                        <div class="widget-liquid">
+                            <div class="widget-header py-3"><h5><i class="bi bi-fire"></i> Cocina</h5></div>
+                            <div class="widget-body d-flex justify-content-around text-center py-4">
+                                <div>
+                                    <h1 class="text-warning fw-bold m-0" style="font-size: 3rem;">{{ $pedidosEnCola }}</h1>
+                                    <span class="text-liquid-muted small text-uppercase fw-bold">Pedidos en cola</span>
+                                </div>
+                                <div>
+                                    <h1 class="text-danger fw-bold m-0" style="font-size: 3rem;">{{ $tiempoPromedio }}<span class="fs-5">m</span></h1>
+                                    <span class="text-liquid-muted small text-uppercase fw-bold">Espera Promedio</span>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- MONITOR DE COCINA (DERECHA) -->
-                        <div class="col-md-4">
-                            <h4 class="text-warning text-center border-bottom border-secondary pb-2 mb-3">MONITOR DE COCINA</h4>
-                            
-                            <div class="card bg-dark border-secondary text-center p-4 mb-3 shadow">
-                                <h1 class="display-1 text-white fw-bold mb-0">{{ $pedidosEnCola }}</h1>
-                                <p class="text-muted fs-5">Pedidos en Cola</p>
+                        <div class="widget-liquid" style="border-color: rgba(237, 145, 9, 0.4);">
+                            <div class="widget-header py-3" style="background: rgba(237, 145, 9, 0.1);">
+                                <h5 class="m-0 text-white"><i class="bi bi-receipt text-accent"></i> Pendientes por Cobrar</h5>
                             </div>
-
-                            <div class="card bg-dark border-secondary text-center p-4 shadow">
-                                <h2 class="text-success fw-bold mb-0">{{ round($tiempoPromedio) }} min</h2>
-                                <p class="text-muted">Tiempo Promedio de Preparación</p>
-                            </div>
-                            
-                            <div class="mt-4 text-center">
-                                <p class="text-muted small">Indicadores generados en tiempo real.<br>Un tiempo promedio mayor a 20 min requiere asistencia en cocina.</p>
+                            <div class="widget-body p-0 custom-scroll" style="height: calc(100vh - 420px); overflow-y: auto;">
+                                <ul class="list-group list-group-flush">
+                                    @forelse($pedidosCaja as $ped)
+                                        <li class="list-group-item bg-transparent border-bottom border-secondary border-opacity-25 py-3 d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <span class="text-white fw-bold fs-6 d-block">Mesa {{ $ped->numero_mesa }}</span>
+                                                <small class="{{ $ped->estado == 'Listo' ? 'text-success' : 'text-info' }} fw-bold" style="font-size: 0.75rem;">
+                                                    <i class="bi bi-circle-fill me-1" style="font-size: 0.4rem; vertical-align: middle;"></i>{{ strtoupper($ped->estado) }}
+                                                </small>
+                                            </div>
+                                            <div class="text-end">
+                                                <span class="text-accent fw-bold fs-5 d-block">${{ number_format($ped->total, 2) }}</span>
+                                                <span class="text-liquid-muted" style="font-size: 0.75rem;">Orden #{{ $ped->pedido_id }}</span>
+                                            </div>
+                                        </li>
+                                    @empty
+                                        <li class="list-group-item bg-transparent text-center border-0 py-4">
+                                            <i class="bi bi-check2-circle text-success" style="font-size: 3rem;"></i>
+                                            <h6 class="text-white mt-2">Caja al día</h6>
+                                            <p class="text-liquid-muted small m-0">No hay cuentas pendientes.</p>
+                                        </li>
+                                    @endforelse
+                                </ul>
                             </div>
                         </div>
                     </div>
-                </div>
 
-               <!-- 2. SECCIÓN PERSONAL -->
-                <div class="tab-pane fade" id="seccion-personal" role="tabpanel">
-                    <div class="d-flex justify-content-between align-items-center border-bottom border-secondary pb-2 mb-4">
-                        <h3 class="m-0 text-white">Gestión de Personal</h3>
-                        <!-- Botón que abre el Modal -->
-                        <button type="button" class="btn btn-success fw-bold" data-bs-toggle="modal" data-bs-target="#modalNuevoEmpleado">
-                            + Nuevo Usuario
+                    <div class="col-md-6">
+                        <div class="widget-liquid">
+                            <div class="widget-header py-3"><h5><i class="bi bi-grid-3x3-gap"></i> Mapa de Mesas</h5></div>
+                            <div class="widget-body p-0 custom-scroll" style="height: calc(100vh - 220px); overflow-y: auto;">
+                                <ul class="list-group list-group-flush">
+                                    @foreach($mesas as $mesa)
+                                        <li class="list-group-item bg-transparent text-white border-bottom border-secondary border-opacity-25 d-flex justify-content-between align-items-center py-3 px-4">
+                                            <span class="fw-bold fs-6">Mesa {{ $mesa->numero_mesa }}</span>
+                                            <span class="liquid-badge {{ $mesa->estado == 'Disponible' ? 'border-success text-success' : 'border-warning text-warning' }} py-1 px-2" style="font-size: 0.75rem;">{{ $mesa->estado }}</span>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="tab-pane fade h-100" id="tab-caja">
+                <div class="row g-4 h-100">
+                    
+                    <div class="col-md-7 d-flex flex-column gap-4">
+                        <div class="row g-4">
+                            <div class="col-md-12">
+                                <div class="widget-liquid d-flex align-items-center p-4" style="border-color: rgba(46, 204, 113, 0.4); background: rgba(46, 204, 113, 0.05);">
+                                    <div class="me-4">
+                                        <i class="bi bi-cash-stack text-success" style="font-size: 5rem; text-shadow: 0 0 20px rgba(46, 204, 113, 0.4);"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="text-liquid-muted text-uppercase tracking-wide mb-1">Ingresos Registrados (Hoy)</h5>
+                                        <h1 class="display-3 fw-bold text-white m-0">${{ number_format($ingresosHoy, 2) }}</h1>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="widget-liquid text-center py-4" style="border-color: rgba(52, 152, 219, 0.3);">
+                                    <i class="bi bi-cart-check text-info" style="font-size: 3rem;"></i>
+                                    <h1 class="display-5 fw-bold text-white mt-2">{{ $volumenVentasHoy }}</h1>
+                                    <h6 class="text-info m-0 text-uppercase">Órdenes Pagadas</h6>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="widget-liquid text-center py-4" style="border-color: rgba(241, 196, 15, 0.3);">
+                                    <i class="bi bi-receipt text-warning" style="font-size: 3rem;"></i>
+                                    <h1 class="display-5 fw-bold text-white mt-2">
+                                        ${{ $volumenVentasHoy > 0 ? number_format($ingresosHoy / $volumenVentasHoy, 2) : '0.00' }}
+                                    </h1>
+                                    <h6 class="text-warning m-0 text-uppercase">Ticket Promedio</h6>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-5 h-100">
+                        <div class="widget-liquid h-100 d-flex flex-column" style="border-color: rgba(237, 145, 9, 0.5);">
+                            <div class="widget-header py-3" style="background: rgba(237, 145, 9, 0.1);">
+                                <h5 class="m-0 text-white"><i class="bi bi-safe2 text-accent me-2"></i> Control de Caja</h5>
+                            </div>
+                            <div class="widget-body flex-grow-1 d-flex flex-column justify-content-between">
+                                
+                                <div>
+                                    <h6 class="text-liquid-muted text-center mb-4">CÁLCULO EXACTO ESPERADO</h6>
+                                    
+                                    <div class="d-flex justify-content-between border-bottom border-secondary border-opacity-25 py-3">
+                                        <span class="text-white fs-5">Fondo Inicial</span>
+                                        <span class="text-liquid-muted fs-5">$500.00</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between border-bottom border-secondary border-opacity-25 py-3">
+                                        <span class="text-white fs-5">Ventas Cobradas</span>
+                                        <span class="text-success fw-bold fs-5">+ ${{ number_format($ingresosHoy, 2) }}</span>
+                                    </div>
+                                    
+                                    <div class="d-flex justify-content-between align-items-center mt-4 bg-dark bg-opacity-50 p-3 rounded border border-accent border-opacity-50">
+                                        <span class="text-accent fw-bold fs-4">TOTAL EN CAJA</span>
+                                        <span class="text-white fw-bold fs-3">${{ number_format($ingresosHoy + 500, 2) }}</span>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4 pt-3 border-top border-secondary border-opacity-25">
+                                    <p class="text-liquid-muted small text-center mb-3">Revisa que el efectivo físico coincida con el cálculo exacto antes de autorizar el cierre.</p>
+                                    
+                                    <button class="btn btn-sr-pizza w-100 fs-5 d-flex justify-content-center align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalCorteCaja">
+                                        <i class="bi bi-shield-check"></i> AUTORIZAR CORTE DE CAJA
+                                    </button>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="tab-pane fade h-100" id="tab-personal">
+                <div class="widget-liquid h-100 d-flex flex-column" style="border-color: rgba(52, 152, 219, 0.4); background: rgba(20, 22, 26, 0.8);">
+                    <div class="widget-header py-3 d-flex justify-content-between align-items-center" style="background: rgba(52, 152, 219, 0.1);">
+                        <h5 class="m-0 text-white"><i class="bi bi-people text-info me-2"></i> Gestión de Personal Operativo</h5>
+                        <button class="btn btn-sm btn-info text-white fw-bold d-flex align-items-center gap-2 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNuevoPersonal" style="background-color: rgba(52, 152, 219, 0.8); border: none;">
+                            <i class="bi bi-person-plus-fill"></i> Nuevo Empleado
                         </button>
                     </div>
                     
-                    <!-- TABLA DE EMPLEADOS OPERATIVOS -->
-                    <div class="card bg-dark border-secondary mt-3">
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table table-dark table-hover align-middle mb-0">
-                                    <thead class="table-active">
+                    <div class="widget-body p-0 flex-grow-1 overflow-auto custom-scroll">
+                        <table class="table table-dark table-liquid mb-0 align-middle" style="background: transparent; --bs-table-bg: transparent;">
+                            <thead style="position: sticky; top: 0; z-index: 1; background: #1a1d24;">
+                                <tr>
+                                    <th class="ps-4 border-bottom border-secondary border-opacity-50 text-uppercase text-info">Empleado</th>
+                                    <th class="border-bottom border-secondary border-opacity-50 text-uppercase text-info">Puesto / Rol</th>
+                                    <th class="border-bottom border-secondary border-opacity-50 text-uppercase text-info">Matrícula</th>
+                                    <th class="border-bottom border-secondary border-opacity-50 text-uppercase text-info">Salario / Com.</th>
+                                    <th class="text-end pe-4 border-bottom border-secondary border-opacity-50 text-uppercase text-info">Administrar</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($usuarios as $usr)
+                                    <tr style="{{ $usr->activo == 0 ? 'opacity: 0.4; filter: grayscale(100%); transition: all 0.3s ease;' : 'transition: all 0.3s ease;' }}">
+                                        <td class="ps-4 border-bottom border-secondary border-opacity-25 py-3">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div class="rounded-circle d-flex justify-content-center align-items-center text-white fw-bold shadow-sm" style="width: 45px; height: 45px; background: {{ $usr->activo == 1 ? 'linear-gradient(135deg, #f08401, #e74c3c)' : '#444' }}; font-size: 1.2rem;">
+                                                    {{ strtoupper(substr($usr->nombre_completo, 0, 1)) }}
+                                                </div>
+                                                <div>
+                                                    <span class="text-white fw-bold d-block fs-6">{{ $usr->nombre_completo }}</span>
+                                                    <span class="{{ $usr->activo == 1 ? 'text-success' : 'text-danger' }} small fw-bold">
+                                                        <i class="bi bi-circle-fill me-1" style="font-size: 0.4rem;"></i>{{ $usr->activo == 1 ? 'ACTIVO' : 'INACTIVO' }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        
+                                        <td class="border-bottom border-secondary border-opacity-25">
+                                            @if($usr->id_rol == 2) <span class="liquid-badge border-primary text-primary bg-primary bg-opacity-10"><i class="bi bi-cup-hot me-1"></i> {{ $usr->nombre_rol }}</span>
+                                            @elseif($usr->id_rol == 4) <span class="liquid-badge border-warning text-warning bg-warning bg-opacity-10"><i class="bi bi-fire me-1"></i> {{ $usr->nombre_rol }}</span>
+                                            @elseif($usr->id_rol == 5) <span class="liquid-badge border-success text-success bg-success bg-opacity-10"><i class="bi bi-cash me-1"></i> {{ $usr->nombre_rol }}</span>
+                                            @else <span class="liquid-badge border-secondary text-white">{{ $usr->nombre_rol }}</span>
+                                            @endif
+                                        </td>
+                                        
+                                        <td class="text-liquid-muted fw-bold font-monospace fs-6 border-bottom border-secondary border-opacity-25">{{ $usr->matricula }}</td>
+                                        
+                                        <td class="border-bottom border-secondary border-opacity-25">
+                                            <span class="text-accent fw-bold fs-5">${{ number_format($usr->porcentaje_comision, 2) }}</span>
+                                            <span class="text-liquid-muted small d-block">Base</span>
+                                        </td>
+                                        
+                                        <td class="text-end pe-4 border-bottom border-secondary border-opacity-25">
+                                            <div class="d-flex gap-2 justify-content-end">
+                                                
+                                                <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#modalEditarPersonal_{{ $usr->id_usuario }}" title="Editar Rol o Salario" {{ $usr->activo == 0 ? 'disabled' : '' }}>
+                                                    <i class="bi bi-pencil-square"></i>
+                                                </button>
+
+                                                <form action="{{ route('gerente.usuario.estado', $usr->id_usuario) }}" method="POST" class="m-0">
+                                                    @csrf
+                                                    <button type="submit" class="btn btn-sm {{ $usr->activo == 1 ? 'btn-outline-danger' : 'btn-outline-success' }}" title="{{ $usr->activo == 1 ? 'Dar de Baja' : 'Reactivar Empleado' }}">
+                                                        @if($usr->activo == 1) <i class="bi bi-person-x-fill"></i> @else <i class="bi bi-person-check-fill"></i> @endif
+                                                    </button>
+                                                </form>
+
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                @foreach($usuarios as $usr)
+                    <div class="modal fade liquid-modal text-start" id="modalEditarPersonal_{{ $usr->id_usuario }}" tabindex="-1">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <form action="{{ route('gerente.actualizar_empleado', $usr->id_usuario) }}" method="POST" class="modal-content">
+                                @csrf
+                                <div class="modal-header border-secondary border-opacity-25 pb-3">
+                                    <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i> Editar: <span class="text-white">{{ $usr->nombre_completo }}</span></h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body px-4 py-4">
+                                    
+                                    <div class="alert mb-4 text-center" style="background: rgba(52, 152, 219, 0.1); border: 1px solid rgba(52, 152, 219, 0.3);">
+                                        <small class="text-liquid-muted d-block">Matrícula</small>
+                                        <strong class="text-info fs-4 font-monospace">{{ $usr->matricula }}</strong>
+                                    </div>
+
+                                    <div class="row g-4">
+                                        <div class="col-md-6">
+                                            <label class="text-liquid-muted fw-bold mb-2">Puesto / Rol</label>
+                                            <select name="nuevo_rol" class="form-select liquid-input text-white fw-bold" style="background: rgba(0,0,0,0.8);" required>
+                                                @foreach($rolesOperativos ?? [] as $rol)
+                                                    <option value="{{ $rol->rol_id }}" {{ $usr->id_rol == $rol->rol_id ? 'selected' : '' }} style="color: black;">
+                                                        {{ $rol->nombre_rol }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="text-liquid-muted fw-bold mb-2">Salario / Comisión Base</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-transparent border-secondary border-opacity-25 text-accent">$</span>
+                                                <input type="number" name="nueva_comision" class="form-control liquid-input text-white fw-bold" value="{{ $usr->porcentaje_comision }}" step="0.01" min="0" required>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                                <div class="modal-footer border-secondary border-opacity-25 px-4 pb-4">
+                                    <button type="button" class="btn btn-outline-secondary w-100 mb-2 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                                    <button type="submit" class="btn btn-info text-white fw-bold w-100 m-0" style="background-color: rgba(52, 152, 219, 0.8);">Guardar Cambios</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                @endforeach
+                </div>
+
+            <div class="tab-pane fade h-100" id="tab-insumos">
+                <div class="row g-4 h-100">
+                    <div class="col-md-5">
+                        <div class="widget-liquid h-100 d-flex flex-column" style="border-color: rgba(231, 76, 60, 0.4);">
+                            <div class="widget-header" style="background: rgba(231, 76, 60, 0.1);">
+                                <h5 class="text-danger m-0"><i class="bi bi-exclamation-triangle"></i> Alertas de Desabasto</h5>
+                            </div>
+                            <div class="widget-body flex-grow-1 overflow-auto custom-scroll">
+                                @forelse($alertasStock as $insumo)
+                                    <div class="alert mb-3" style="background: rgba(231, 76, 60, 0.1); border: 1px solid rgba(231, 76, 60, 0.3); color: white;">
+                                        <strong class="fs-5">{{ $insumo->nombre }}</strong><br>
+                                        <span class="text-danger fw-bold">Stock Actual: {{ $insumo->stock_actual }}</span> | <span class="text-liquid-muted">Mín: {{ $insumo->stock_minimo }}</span>
+                                    </div>
+                                @empty
+                                    <div class="text-center py-5">
+                                        <i class="bi bi-check-circle text-success" style="font-size: 4rem;"></i>
+                                        <h5 class="text-success mt-3">Inventario óptimo.</h5>
+                                        <p class="text-liquid-muted">Ningún insumo bajo el mínimo.</p>
+                                    </div>
+                                @endforelse
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-7">
+                        <div class="widget-liquid h-100 d-flex flex-column" style="background: rgba(20, 22, 26, 0.8);">
+                            <div class="widget-header py-3">
+                                <h5><i class="bi bi-tags"></i> Control de Precios (Menú)</h5>
+                            </div>
+                            <div class="widget-body p-0 flex-grow-1 overflow-auto custom-scroll">
+                                <table class="table table-dark table-liquid mb-0 align-middle" style="background: transparent; --bs-table-bg: transparent;">
+                                    <thead style="position: sticky; top: 0; z-index: 1; background: #1a1d24;">
                                         <tr>
-                                            <th>Nombre Completo</th>
-                                            <th>Rol / Puesto</th>
-                                            <th>Matrícula</th>
-                                            <th>Comisión %</th>
-                                            <th>Estado</th>
-                                            <th class="text-end">Acciones Operativas</th>
+                                            <th class="ps-4 border-bottom border-secondary border-opacity-50 text-uppercase text-info">Platillo</th>
+                                            <th class="border-bottom border-secondary border-opacity-50 text-uppercase text-info">P. Actual</th>
+                                            <th class="pe-4 text-end border-bottom border-secondary border-opacity-50 text-uppercase text-info">Modificar</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @forelse($usuarios as $user)
+                                        @foreach($productosMenu as $prod)
                                             <tr>
-                                                <td>{{ $user->nombre_completo }}</td>
-                                                <td><span class="badge bg-secondary">{{ $user->nombre_rol }}</span></td>
-                                                <td class="fw-bold text-warning">{{ $user->matricula }}</td>
-                                                
-                                                <!-- FORMULARIO DE EDICIÓN DE COMISIÓN -->
-                                                <td>
-                                                    <form action="{{ route('gerente.usuario_comision', $user->id_usuario) }}" method="POST" class="d-flex align-items-center">
-                                                        @csrf
-                                                        <input type="number" name="nueva_comision" class="form-control form-control-sm bg-secondary text-white border-0 me-1" value="{{ $user->porcentaje_comision }}" step="0.01" min="0" max="100" style="width: 75px;">
-                                                        <button type="submit" class="btn btn-sm btn-outline-warning">✔</button>
-                                                    </form>
+                                                <td class="ps-4 border-bottom border-secondary border-opacity-25 py-3">
+                                                    <div class="text-white fw-bold fs-6">{{ $prod->nombre }}</div>
+                                                    <div class="text-liquid-muted small">{{ $prod->tamano ?? 'Único' }}</div>
                                                 </td>
-
-                                                <td>
-                                                    @if($user->activo) 
-                                                        <span class="badge bg-success">Activo</span>
-                                                    @else 
-                                                        <span class="badge bg-danger">Inactivo</span> 
-                                                    @endif
-                                                </td>
-                                                <td class="text-end">
-                                                    <!-- Formulario de Cambio de Contraseña -->
-                                                    <form action="{{ route('gerente.usuario_password', $user->id_usuario) }}" method="POST" class="d-inline-block me-2">
+                                                <td class="text-accent fw-bold align-middle fs-5 border-bottom border-secondary border-opacity-25">${{ number_format($prod->precio, 2) }}</td>
+                                                <td class="pe-4 align-middle border-bottom border-secondary border-opacity-25">
+                                                    <form action="{{ route('gerente.actualizar_precio', $prod->producto_id) }}" method="POST" class="d-flex gap-2 justify-content-end">
                                                         @csrf
-                                                        <div class="input-group input-group-sm" style="width: 180px;">
-                                                            <input type="text" name="nueva_password" class="form-control bg-secondary text-white border-0" placeholder="Nueva Pass..." required>
-                                                            <button type="submit" class="btn btn-outline-light">Cambiar</button>
-                                                        </div>
-                                                    </form>
-
-                                                    <!-- Botón de Baja/Alta Lógica (RN-01) -->
-                                                    <form action="{{ route('gerente.usuario_estado', $user->id_usuario) }}" method="POST" class="d-inline-block">
-                                                        @csrf
-                                                        @if($user->activo)
-                                                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Desactivar a este usuario?')">Desactivar</button>
-                                                        @else
-                                                            <button type="submit" class="btn btn-sm btn-success">Reactivar</button>
-                                                        @endif
+                                                        <input type="number" name="nuevo_precio" class="form-control form-control-sm liquid-input" value="{{ $prod->precio }}" step="0.01" min="0" required style="width: 100px; text-align: center; font-weight: bold; font-size: 1.1rem;">
+                                                        <button type="submit" class="btn btn-sm btn-outline-accent" title="Actualizar Precio"><i class="bi bi-check-lg"></i></button>
                                                     </form>
                                                 </td>
                                             </tr>
-                                        @empty
-                                            <tr>
-                                                <td colspan="6" class="text-center text-muted py-4">No hay personal operativo registrado.</td>
-                                            </tr>
-                                        @endforelse
+                                        @endforeach
                                     </tbody>
                                 </table>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- MODAL DE NUEVO EMPLEADO (Restringido para Gerente) -->
-                <div class="modal fade" id="modalNuevoEmpleado" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content bg-dark text-white border-secondary">
-                            <div class="modal-header border-secondary">
-                                <h5 class="modal-title text-warning">Alta de Personal Operativo</h5>
-                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <form action="{{ route('gerente.crear_personal') }}" method="POST">
-                                @csrf
-                                <div class="modal-body">
-                                    <div class="mb-3">
-                                        <label class="form-label">Nombre Completo</label>
-                                        <input type="text" name="nombre_completo" class="form-control bg-secondary text-white border-0" required>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label">Teléfono</label>
-                                            <input type="text" name="telefono" class="form-control bg-secondary text-white border-0" required>
-                                        </div>
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label">Comisión (%)</label>
-                                            <input type="number" name="comision" class="form-control bg-secondary text-white border-0" step="0.01" min="0" max="100" value="0">
-                                        </div>
-                                    </div>
-                                    <hr class="border-secondary">
-                                    <div class="row">
-                                        <div class="col-md-4 mb-3">
-                                            <label class="form-label">Matrícula (Login)</label>
-                                            <input type="number" name="matricula" class="form-control bg-secondary text-white border-0" required>
-                                        </div>
-                                        <div class="col-md-4 mb-3">
-                                            <label class="form-label">Contraseña</label>
-                                            <input type="text" name="contrasena" class="form-control bg-secondary text-white border-0" required>
-                                        </div>
-                                        <div class="col-md-4 mb-3">
-                                            <label class="form-label text-info">Rol Asignado</label>
-                                            <select name="id_rol" class="form-select bg-secondary text-white border-0" required>
-                                                <!-- Solo se muestran roles operativos (2, 4 y 5) -->
-                                                <option value="2">Mesero</option>
-                                                <option value="4">Cocinero</option>
-                                                <option value="5">Cajero</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="modal-footer border-secondary">
-                                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button>
-                                    <button type="submit" class="btn btn-success fw-bold">Guardar Empleado</button>
-                                </div>
-                            </form>
-                        </div>
+            <div class="tab-pane fade h-100" id="tab-auditoria">
+                <div class="widget-liquid h-100 d-flex flex-column" style="border-color: rgba(231, 76, 60, 0.4); background: rgba(20, 22, 26, 0.8);">
+                    <div class="widget-header py-3" style="background: rgba(231, 76, 60, 0.1);">
+                        <h5 class="text-danger m-0"><i class="bi bi-shield-lock me-2"></i> Registros de Seguridad (Bitácora)</h5>
+                    </div>
+                    <div class="widget-body p-0 flex-grow-1 overflow-auto custom-scroll">
+                        <table class="table table-dark table-liquid mb-0 align-middle" style="background: transparent; --bs-table-bg: transparent;">
+                            <thead style="position: sticky; top: 0; z-index: 1; background: #1a1d24;">
+                                <tr>
+                                    <th class="ps-4 border-bottom border-secondary border-opacity-50 text-uppercase text-danger">Fecha y Hora</th>
+                                    <th class="border-bottom border-secondary border-opacity-50 text-uppercase text-danger">Acción</th>
+                                    <th class="border-bottom border-secondary border-opacity-50 text-uppercase text-danger">Tabla Afectada</th>
+                                    <th class="pe-4 border-bottom border-secondary border-opacity-50 text-uppercase text-danger">Usuario / Detalles</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($bitacora as $log)
+                                    <tr>
+                                        <td class="ps-4 text-liquid-muted border-bottom border-secondary border-opacity-25 py-3">{{ \Carbon\Carbon::parse($log->fecha ?? now())->format('d/m/Y H:i') }}</td>
+                                        <td class="text-danger fw-bold border-bottom border-secondary border-opacity-25">{{ $log->accion ?? 'Desconocida' }}</td>
+                                        <td class="text-accent border-bottom border-secondary border-opacity-25">{{ $log->tabla_afectada ?? 'N/A' }}</td>
+                                        <td class="pe-4 text-white border-bottom border-secondary border-opacity-25">{{ $log->detalles ?? 'N/A' }}</td>
+                                    </tr>
+                                @empty
+                                    <tr><td colspan="4" class="text-center text-liquid-muted py-5 border-0">
+                                        <i class="bi bi-shield-check text-secondary" style="font-size: 3rem;"></i>
+                                        <p class="mt-3">Sin registros de actividad sospechosa.</p>
+                                    </td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-
-                <!-- 3. SECCIÓN MENÚ -->
-                <div class="tab-pane fade" id="seccion-menu" role="tabpanel">
-                    <h3 class="border-bottom border-secondary pb-2">Catálogo del Menú</h3>
-                    <p class="text-muted mt-3">[Aquí insertaremos la tabla de lectura de productos, habilitando únicamente el botón de "Cambiar Precio"]</p>
-                </div>
-
-                <!-- 4. SECCIÓN INSUMOS -->
-                <div class="tab-pane fade" id="seccion-insumos" role="tabpanel">
-                    <h3 class="border-bottom border-secondary pb-2">Monitor de Insumos y Stock</h3>
-                    <p class="text-muted mt-3">[Aquí insertaremos la tabla de inventario en modo lectura para vigilar el Stock Actual vs Stock Mínimo]</p>
-                </div>
-
-                <!-- 5. SECCIÓN CAJA -->
-                <div class="tab-pane fade" id="seccion-caja" role="tabpanel">
-                    <h3 class="border-bottom border-secondary pb-2">Monitor Financiero (Caja)</h3>
-                    <p class="text-muted mt-3">[Aquí insertaremos el espejo de la vista del cajero con las órdenes pendientes de cobro y totales diarios]</p>
-                </div>
-
             </div>
-        </div>
 
+        </div>
     </div>
 </div>
 
+<div class="modal fade liquid-modal" id="modalNuevoPersonal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <form action="{{ route('gerente.crear_personal') }}" method="POST" class="modal-content">
+            @csrf
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-person-plus"></i> Alta de Personal Operativo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body px-4">
+                <div class="mb-3">
+                    <label>Nombre Completo</label>
+                    <input type="text" name="nombre_completo" class="form-control liquid-input" pattern="[A-Za-zÀ-ÿ\s]+" title="Solo se permiten letras y espacios. No utilices números ni símbolos." required>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label>Teléfono</label>
+                        <input type="text" name="telefono" class="form-control liquid-input" pattern="[0-9]+" title="Por favor, ingresa únicamente números." required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label>Rol</label>
+                        <select name="id_rol" class="form-select liquid-input text-white" style="background: rgba(0,0,0,0.8);" required>
+                            <option value="2">Mesero</option>
+                            <option value="4">Cocinero</option>
+                            <option value="5">Cajero</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label>Matrícula (Login)</label>
+                        <input type="text" name="matricula" class="form-control liquid-input" pattern="[0-9]+" title="La matrícula debe contener únicamente números enteros." required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label>Contraseña</label>
+                        <input type="text" name="contrasena" class="form-control liquid-input" minlength="3" title="La contraseña debe tener al menos 3 caracteres." required>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer px-4 pb-4">
+                <button type="submit" class="btn btn-sr-pizza w-100 fw-bold">Crear Empleado</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<div class="modal fade liquid-modal" id="modalCorteCaja" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <form action="{{ route('gerente.corte_caja') }}" method="POST" class="modal-content text-center">
+            @csrf
+            <div class="modal-header border-0 pb-0 justify-content-end">
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body px-5 pb-5 pt-0">
+                <i class="bi bi-exclamation-triangle text-warning mb-3" style="font-size: 4rem;"></i>
+                <h3 class="text-white fw-bold">¿Autorizar Cierre?</h3>
+                <p class="text-liquid-muted">Al confirmar, se registrará el corte de caja con un total de <strong class="text-accent">${{ number_format($ingresosHoy + 500, 2) }}</strong>.</p>
+                <p class="text-danger small">Las ventas cobradas regresarán a $0.00 para el siguiente turno.</p>
+                
+                <div class="d-flex gap-3 mt-4">
+                    <button type="button" class="btn btn-outline-secondary w-50 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-sr-pizza w-50 fw-bold">Confirmar Corte</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

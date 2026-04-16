@@ -468,3 +468,106 @@ body {
 .custom-scroll::-webkit-scrollbar { width: 6px; }
 .custom-scroll::-webkit-scrollbar-track { background: transparent; }
 .custom-scroll::-webkit-scrollbar-thumb { background: var(--accent-orange); border-radius: 10px; }
+
+/* =========================================
+   DASHBOARD GERENTE (MENU VERTICAL FLOTANTE)
+   ========================================= */
+
+.dashboard-wrapper {
+    display: flex;
+    gap: 30px;
+    height: calc(100vh - 100px); /* Altura fija para que no baje toda la página */
+    overflow: hidden;
+}
+
+/* Menú Lateral Flotante de Cristal */
+.liquid-sidebar {
+    width: 260px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    border-radius: 15px;
+    padding: 25px 20px;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+.liquid-sidebar .nav-pills {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.liquid-sidebar .nav-link {
+    color: var(--text-muted);
+    border-radius: 10px;
+    padding: 15px 20px;
+    text-align: left;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+    background: rgba(0,0,0,0.2);
+}
+
+.liquid-sidebar .nav-link:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-main);
+    transform: translateX(5px);
+}
+
+.liquid-sidebar .nav-link.active {
+    background: rgba(237, 145, 9, 0.1) !important;
+    color: var(--accent-orange) !important;
+    border: 1px solid var(--accent-orange);
+    box-shadow: 0 0 15px rgba(237, 145, 9, 0.2);
+    transform: translateX(5px);
+}
+
+/* Contenedor Principal (Donde cambian las pantallas) */
+.dashboard-content {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding-right: 15px;
+}
+
+/* Scrollbar neón para el contenido principal */
+.dashboard-content::-webkit-scrollbar { width: 8px; }
+.dashboard-content::-webkit-scrollbar-track { background: transparent; }
+.dashboard-content::-webkit-scrollbar-thumb { background: var(--accent-orange); border-radius: 10px; }
+
+/* Widgets Internos */
+.widget-liquid {
+    background: rgba(30, 32, 39, 0.6);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    overflow: hidden;
+    height: 100%;
+}
+.widget-header {
+    background: rgba(0, 0, 0, 0.4);
+    padding: 15px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.widget-header h5 { margin: 0; color: var(--accent-orange); font-weight: 700; }
+.widget-body { padding: 20px; }
+
+/* Tablas dentro de los widgets */
+.table-liquid { color: var(--text-main); margin-bottom: 0; }
+.table-liquid thead th { background: rgba(237, 145, 9, 0.1); color: var(--accent-orange); border-bottom: 2px solid var(--glass-border); text-transform: uppercase; font-size: 0.8rem; padding: 12px; }
+.table-liquid tbody td { border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding: 12px; vertical-align: middle; }
+.table-liquid tbody tr:hover td { background: rgba(255, 255, 255, 0.03); }
+
+/* Modales */
+.liquid-modal .modal-content { background: var(--bg-darker); border: 1px solid var(--glass-border); border-radius: 15px; color: var(--text-main); }
+.liquid-modal .modal-header { border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+.liquid-modal .modal-footer { border-top: 1px solid rgba(255, 255, 255, 0.1); }
+.liquid-modal .modal-title { color: var(--accent-orange); font-weight: bold; }
+.liquid-modal label { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 5px; }
+.liquid-modal .btn-close { filter: invert(1); }

@@ -52,15 +52,22 @@ Route::middleware([VerificarSesion::class.':2'])->group(function () {
 });
 
 //RUTAS EXCLUSIVAS DEL GERENTE (Rol 3)
-
-
 // 📊 RUTAS EXCLUSIVAS DEL GERENTE (Rol 3)
-    Route::middleware([VerificarSesion::class.':3'])->group(function () {
-    Route::get('/gerente/dashboard', [GerenteController::class, 'index'])->name('gerente.dashboard');
-    Route::post('/gerente/usuario/{id}/estado', [GerenteController::class, 'alternarEstado'])->name('gerente.usuario_estado');
-    Route::post('/gerente/usuario/{id}/password', [GerenteController::class, 'cambiarPassword'])->name('gerente.usuario_password');
-     Route::post('/gerente/personal/crear', [GerenteController::class, 'crearPersonal'])->name('gerente.crear_personal');
-    Route::post('/gerente/usuario/{id}/comision', [GerenteController::class, 'cambiarComision'])->name('gerente.usuario_comision');
+Route::middleware([VerificarSesion::class.':3'])->group(function () {
+    // 1. Dashboard Principal
+    Route::get('/gerente/dashboard', [App\Http\Controllers\GerenteController::class, 'index'])->name('gerente.dashboard');
+    
+    // 2. Gestión de Personal (CRUD)
+    Route::post('/gerente/personal/crear', [App\Http\Controllers\GerenteController::class, 'crearPersonal'])->name('gerente.crear_personal');
+    Route::post('/gerente/usuario/{id}/estado', [App\Http\Controllers\GerenteController::class, 'alternarEstado'])->name('gerente.usuario.estado');
+    Route::post('/gerente/usuario/{id}/password', [App\Http\Controllers\GerenteController::class, 'cambiarPassword'])->name('gerente.cambiar_password');
+    Route::post('/gerente/usuario/{id}/comision', [App\Http\Controllers\GerenteController::class, 'cambiarComision'])->name('gerente.cambiar_comision');
+    // Actualizar precio de menú
+    Route::post('/gerente/producto/{id}/precio', [App\Http\Controllers\GerenteController::class, 'actualizarPrecio'])->name('gerente.actualizar_precio');
+    // Procesar Corte de Caja
+    Route::post('/gerente/caja/corte', [App\Http\Controllers\GerenteController::class, 'procesarCorte'])->name('gerente.corte_caja');
+    // Actualizar Rol y Salario/Comisión del empleado
+    Route::post('/gerente/usuario/{id}/actualizar', [App\Http\Controllers\GerenteController::class, 'actualizarEmpleado'])->name('gerente.actualizar_empleado');
 });
 
 // 👨‍🍳 RUTAS EXCLUSIVAS DE LA COCINA (Rol 4)
@@ -87,3 +94,4 @@ Route::middleware([VerificarSesion::class.':5'])->group(function () {
     Route::post('/caja/cancelar/{pedido_id}', [CajaController::class, 'cancelarPedido'])->name('caja.cancelar_pedido');
     Route::get('/caja/ticket/{pedido_id}', [CajaController::class, 'imprimirTicket'])->name('caja.imprimir_ticket');
 });
+
