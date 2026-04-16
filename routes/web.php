@@ -23,15 +23,30 @@ Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
 // 🍕 RUTAS EXCLUSIVAS DEL MESERO (Rol 2)
 
 
+Route::post('/admin/receta/actualizar', [App\Http\Controllers\AdminController::class, 'actualizarReceta'])->name('admin.actualizar_receta');
 
 
 
+// ==========================================
+// MÓDULO ADMINISTRADOR (SUPERUSUARIO)
+// ==========================================
+Route::get('/admin/dashboard', [App\Http\Controllers\AdminController::class, 'index'])->name('admin.dashboard');
+
+// Rutas preparadas para cuando pulamos cada pestaña:
+Route::post('/admin/personal/crear', [App\Http\Controllers\AdminController::class, 'crearPersonal'])->name('admin.crear_personal');
+Route::post('/admin/personal/{id}/eliminar', [App\Http\Controllers\AdminController::class, 'eliminarPersonal'])->name('admin.eliminar_personal');
+Route::post('/admin/menu/crear', [App\Http\Controllers\AdminController::class, 'crearProducto'])->name('admin.crear_producto');
+Route::post('/admin/compras/registrar', [App\Http\Controllers\AdminController::class, 'registrarCompra'])->name('admin.registrar_compra');
+Route::post('/admin/ajustes/guardar', [App\Http\Controllers\AdminController::class, 'guardarAjustes'])->name('admin.guardar_ajustes');
 
 
 
+// RUTAS ADMIN: MENÚ Y RECETAS
+Route::post('/admin/producto/crear', [App\Http\Controllers\AdminController::class, 'crearProducto'])->name('admin.crear_producto');
+Route::post('/admin/producto/{id}/eliminar', [App\Http\Controllers\AdminController::class, 'eliminarProducto'])->name('admin.eliminar_producto');
 
-
-
+// RUTAS ADMIN: ABASTECIMIENTO
+Route::post('/admin/compras/registrar', [App\Http\Controllers\AdminController::class, 'registrarCompra'])->name('admin.registrar_compra');
 
 
 
@@ -39,7 +54,8 @@ Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
 
 
 
-
+Route::post('/admin/config/actualizar', [App\Http\Controllers\AdminController::class, 'actualizarConfiguracion'])->name('admin.actualizar_config');
+Route::get('/admin/config/respaldo', [App\Http\Controllers\AdminController::class, 'respaldarBaseDatos'])->name('admin.respaldo_bd');
 
 
 // RUTAS EXCLUSIVAS DEL MESERO Rol 2
